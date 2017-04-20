@@ -1,0 +1,32 @@
+	i=0;
+	n=0;
+	while(i==0&&n<500000)
+	    x1=randi([-100000,100000]);
+	    x2=randi([-100000,100000]);
+	    x3=randi([-100000,100000]);
+	    x4=randi([-100000,100000]);
+	    if(((x1*w1(1)+x2*w1(2)+x3*w1(3)+x4*w1(4)>0)&&(x1*w2(1)+x2*w2(2)+x3*w2(3)+x4*w2(4)<0))||((x1*w1(1)+x2*w1(2)+x3*w1(3)+x4*w1(4)<0)&&(x1*w2(1)+x2*w2(2)+x3*w2(3)+x4*w2(4)>0)))
+		for rowi=1:samp_num;
+		    tmpt = [];
+		    tmpt = X_train(rowi);
+		    if(tmpt(1)==x1)
+		        if(tmpt(2)==x2)
+		            if(tmpt(3)==x3)
+		                if(tmpt(4)==x4)
+		                    break;
+		                end
+		            end
+		        end
+		    end
+		    if(rowi == samp_num)
+		        i=i+1;
+			new_x=[x1,x2,x3,x4];
+		        X_train = [X_train; [x1,x2,x3,x4]];
+		    end
+		end
+	    end
+	    n=n+1;
+	end
+	if(n>=100000)
+	    disp('No reasonable pairs!');
+	end
