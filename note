@@ -1,8 +1,8 @@
 cd to current folder
 
-g++ op_kqbc.cpp -o kpbc -I/usr/local/MATLAB/R2016b/extern/include -leng -lmat -lmx -lmex -lut -L/usr/local/MATLAB/R2016b/bin/glnxa64 -Wl,-rpath=/usr/local/MATLAB/R2016b/bin/glnxa64
+g++ qbc.cpp -o qbc -I/usr/local/MATLAB/R2016b/extern/include -leng -lmat -lmx -lmex -lut -L/usr/local/MATLAB/R2016b/bin/glnxa64 -Wl,-rpath=/usr/local/MATLAB/R2016b/bin/glnxa64
 
 note:
-1. g++ must be newer than 5.0.0;
+##1. g++ must be newer than 5.0.0;
 2. include with right path, and the -Wl,-rpath.
 

@@ -39,8 +39,10 @@ class Oracle {
 		}
 
 		void readCoef() {
-			for (int i = 0; i < dim+1; i++)
+			for (int i = 0; i < dim+1; i++) {
+				cout << "  coef[" << i << "]=";
 				cin >> coefs[i];
+			}
 		}
 
 
@@ -72,8 +74,7 @@ class Oracle {
 
 
 int main(){
-	Engine *ep1;
-	Engine *ep2;
+	Engine *eng1, *eng2;
 	mxArray *select=NULL, *data=NULL, *label=NULL;
 	mxArray *coef=NULL, *errors=NULL, *n=NULL, *new_x=NULL, *w1=NULL, *w2=NULL, *y=NULL, *w=NULL, *aco1=NULL,*aco2=NULL, *cease=NULL;
 
@@ -86,7 +87,7 @@ int main(){
 	cin >> dim;
 	Oracle oracle(dim);
 	oracle.readCoef();
-	oracle.output();
+	//oracle.output();
 
 	double *cselect = new double [n_init];
 	for (int i = 0; i < n_init; i++)
@@ -107,7 +108,7 @@ int main(){
 		}
 
 		clabel[i] = oracle.classify(temp);
-		cout << "<";
+		cout << "|------init<";
 		for (int k = 0; k < dim; k++)
 			cout << cdata[k * n_init + i] << " ";
 		cout << "> " << clabel[i] << endl;
@@ -133,14 +134,19 @@ int main(){
 	double cy[1];
 	cy[0] = 1;
 
-	if (!(ep1 = engOpen(""))) {
-		fprintf(stderr, "\nCan't start MATLAB engine1\n");
+	if (!(eng1 = engOpen(NULL))) {
+		cerr << "\nCan't start MATLAB engine1\n";
 		return EXIT_FAILURE;
 	}
-	if (!(ep2 = engOpen(""))) {
-		fprintf(stderr, "\nCan't start MATLAB engine2\n");
+	eng2 = eng1;
+	/*
+	if (!(eng2 = engOpen(NULL))) {
+		cerr << "\nCan't start MATLAB engine2\n";
 		return EXIT_FAILURE;
 	}
+	*/
+	engSetVisible(eng1, 0);
+	//engSetVisible(eng2, 0);
 
 	select = mxCreateDoubleMatrix(1, n_init, mxREAL);
 	data = mxCreateDoubleMatrix(n_init, dim, mxREAL);
@@ -166,26 +172,26 @@ int main(){
 	for(int i = n_init + 1; i<50; i++){
 		cn[0]=i;
 		memcpy((void *)mxGetPr(n), (void *)cn, sizeof(cn));
-		engPutVariable(ep1, "X_train", data);
-		engPutVariable(ep1, "Y_train", label);
-		engPutVariable(ep1, "coef", coef);
-		engPutVariable(ep1, "selection", select);
-		engEvalString(ep1, "newx");
+		engPutVariable(eng1, "X_train", data);
+		engPutVariable(eng1, "Y_train", label);
+		engPutVariable(eng1, "coef", coef);
+		engPutVariable(eng1, "selection", select);
+		engEvalString(eng1, "newx");
 
 		aco1 = mxCreateDoubleMatrix(i-1,1, mxREAL);
 		aco2 = mxCreateDoubleMatrix(i-1,1, mxREAL);
-		data = mxCreateDoubleMatrix(i,dimension, mxREAL);
+		data = mxCreateDoubleMatrix(i,dim, mxREAL);
 
-		new_x = engGetVariable(ep1,"new_x");
-		data = engGetVariable(ep1,"X_train");
-		w1 = engGetVariable(ep1,"w1");
-		w2 = engGetVariable(ep1,"w2");
-		aco1 = engGetVariable(ep1,"aco1");
-		aco2 = engGetVariable(ep1,"aco2");
-		cease= engGetVariable(ep1,"n");
+		new_x = engGetVariable(eng1,"new_x");
+		data = engGetVariable(eng1,"X_train");
+		w1 = engGetVariable(eng1,"w1");
+		w2 = engGetVariable(eng1,"w2");
+		aco1 = engGetVariable(eng1,"aco1");
+		aco2 = engGetVariable(eng1,"aco2");
+		cease= engGetVariable(eng1,"n");
 
 		/**********************************************************************/
-		cout << BLUE << "--------------------------------" << i << "-----------------------------" << NORMAL;
+		cout << BLUE << "-------------------query" << i << "------------------" << NORMAL;
 
 		if(*mxGetPr(cease) == 50000){
 			nsamples = i-1;
@@ -205,45 +211,45 @@ int main(){
 				cout << ", ";
 		}
 		cout << ">";
-		cout << NORMAL << "\n";
+		cout << NORMAL;
 		//cy[0] = (cx[0]*2-cx[1]>0) ? 1:-1;
 		//		cy[0]= somefunction(new_x); //cx[]=new_x; generated label of new_x;
 
 		/**********************************************************************/
 		memcpy((void *)mxGetPr(y), (void *)cy, sizeof(cy));
-		engPutVariable(ep2, "X_train", data);
-		engPutVariable(ep2, "Y_train", label);
-		engPutVariable(ep2, "w1", w1);
-		engPutVariable(ep2, "w2", w2);
-		engPutVariable(ep2, "coef", coef);
-		engPutVariable(ep2, "ii", n);
-		engPutVariable(ep2, "selection", select);
-		engPutVariable(ep2, "y", y);
-		engPutVariable(ep2, "aco1", aco1);
-		engPutVariable(ep2, "aco2", aco2);
-		engEvalString(ep2, "predict");
+		engPutVariable(eng2, "X_train", data);
+		engPutVariable(eng2, "Y_train", label);
+		engPutVariable(eng2, "w1", w1);
+		engPutVariable(eng2, "w2", w2);
+		engPutVariable(eng2, "coef", coef);
+		engPutVariable(eng2, "ii", n);
+		engPutVariable(eng2, "selection", select);
+		engPutVariable(eng2, "y", y);
+		engPutVariable(eng2, "aco1", aco1);
+		engPutVariable(eng2, "aco2", aco2);
+		engEvalString(eng2, "predict");
 
 		select = mxCreateDoubleMatrix(1,i, mxREAL);
 		label = mxCreateDoubleMatrix(i,1, mxREAL);
 		coef = mxCreateDoubleMatrix(i,1, mxREAL);
 		errors = mxCreateDoubleMatrix(i-3,1, mxREAL);
 
-		errors = engGetVariable(ep2,"error");
-		coef = engGetVariable(ep2,"coef");
-		w = engGetVariable(ep2,"w");
-		select = engGetVariable(ep2,"selection");
-		label = engGetVariable(ep2,"Y_train");
+		errors = engGetVariable(eng2,"error");
+		coef = engGetVariable(eng2,"coef");
+		w = engGetVariable(eng2,"w");
+		select = engGetVariable(eng2,"selection");
+		label = engGetVariable(eng2,"Y_train");
 		//for(int j=0; j<6; j++){ printf("select is  %f\t\n", *(mxGetPr(select)+j));}
-		cout << CYAN << "error rate " << *(mxGetPr(errors)) << "\n" << NORMAL;
+		cout << CYAN << "->->->->error_rate " << *(mxGetPr(errors)) << "\n" << NORMAL;
 		for(int j=0; j<dim; j++){ 
 			cout << *(mxGetPr(w)+j) << " * x_" << j;
 			if (j != dim - 1)
 				cout << " + ";
 		}
-		cout << " >= 0." << endl << endl;
+		cout << " >= 0." << endl;
 	}
 
-	engClose(ep1);	
-	engClose(ep2);
+	engClose(eng1);	
+	//engClose(eng2);
 	return EXIT_SUCCESS;
 }
