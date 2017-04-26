@@ -170,7 +170,7 @@ int main(){
 		engPutVariable(ep, "Y_train", mlabel);
 		engPutVariable(ep, "coef", mcoef);
 		engPutVariable(ep, "selection", mselect);
-		engPutVariable(ep, "dim", dim);
+		//engPutVariable(ep, "dim", dim);
 		engEvalString(ep, "newx");
 
 		aco1 = mxCreateDoubleMatrix(i-1,1, mxREAL);
