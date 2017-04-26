@@ -1,5 +1,5 @@
 % new query data generated.
-%function [new_x,X_train,w1,w2] = newx(X_train, Y_train, coef, selection, dim)  
+%function [new_x,X_train,w1,w2] = newx(X_train, Y_train,coef,selection)  
 
 	tol = 1e-10;   %tolerance for the factor function error,
 	K = X_train*X_train';
