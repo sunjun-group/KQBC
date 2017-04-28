@@ -33,34 +33,34 @@ function [x]=hit_n_run(x,A,T)
 
 dim=length(x);
 x=x(:);
-u=randn(T,dim); % at step t the algorithm will pick a random point
-                % on the line through x and x+u(t,:)
-Au=u*A';
-nu=sum(u.^2,2);
+u=randn(T,dim) % at step t the algorithm will pick a random point
+% on the line through x and x+u(t,:)
+Au=u*A'
+nu=sum(u.^2,2)
 rng('shuffle');
-l=rand(T,1);
+l=rand(T,1)
 
 for t=1:T
-  Ax=A*x;
-  ratio=-Ax./Au(t,:)';
-  I=(Au(t,:)>0);
-  mn=max([ratio(I);-realmax]);
-  I=(Au(t,:)<0);
-  mx=min([ratio(I);realmax]);
-  
-  disc=(x'*u(t,:)')^2-nu(t)*(norm(x)^2-1);
-  if (disc<0) 
- %   warning(['negative disc ' num2str(disc) '. Probably x is not a ' ...
- %                  'feasable point.']);
-    disp('Warning: Probably x is not a feasable point');  
-    disc=0;
+	Ax=A*x;
+	ratio=-Ax./Au(t,:)';
+	I=(Au(t,:)>0);
+	mn=max([ratio(I);-realmax]);
+	I=(Au(t,:)<0);
+	mx=min([ratio(I);realmax]);
+
+	disc=(x'*u(t,:)')^2-nu(t)*(norm(x)^2-1);
+	if (disc<0) 
+		%   warning(['negative disc ' num2str(disc) '. Probably x is not a ' ...
+		%                  'feasable point.']);
+		disp('Warning: Probably x is not a feasable point');  
+		disc=0;
   end
   hl=(-(x'*u(t,:)')+sqrt(disc))/nu(t);
   ll=(-(x'*u(t,:)')-sqrt(disc))/nu(t);
-  
+
   xx=min(hl,mx);
   nn=max(ll,mn);
   x=x+u(t,:)'*(nn+l(t)*(xx-nn));
 end
-  
+
 

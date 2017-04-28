@@ -25,11 +25,15 @@ using namespace std;
 #define BOLD "\e[1m"
 #define UNDERLINE "\e[4m"
 
+
+bool TEST = false;
+
 class Oracle {
 	public:
-		Oracle(int dim) : dim(dim){
+		Oracle(){
+			coefs = NULL;
 			// assert (dim >= 0);
-			coefs = new double[dim+1];
+			//coefs = new double[dim+1];
 		}
 		~Oracle() {
 			if (coefs != NULL) {
@@ -38,10 +42,19 @@ class Oracle {
 			}
 		}
 
-		void readCoef() {
-			for (int i = 0; i < dim+1; i++) {
-				cout << "  coef[" << i << "]=";
-				cin >> coefs[i];
+		void readCoef(int dim) {
+			if (TEST) {
+				dim = 2;
+				coefs = new double[3];
+				coefs[0] = -1;
+				coefs[1] = 2;
+				coefs[2] = 0;
+			} else {
+				coefs = new double[dim+1];
+				for (int i = 0; i < dim+1; i++) {
+					cout << "  coef[" << i << "]=";
+					cin >> coefs[i];
+				}
 			}
 		}
 
@@ -70,7 +83,9 @@ class Oracle {
 
 
 
-int main(){
+int main(int argc, char** argv){
+	if (argc > 1)
+		TEST = true;
 	Engine *ep;
 	mxArray *mselect=NULL, *mdata=NULL, *mlabel=NULL;
 	mxArray *mcoef=NULL, *merrors=NULL, *n=NULL, *new_x=NULL, *w1=NULL, *w2=NULL, *y=NULL, *w=NULL, *aco1=NULL,*aco2=NULL, *cease=NULL;
@@ -80,10 +95,12 @@ int main(){
 	int n_init = 3;
 
 	srand(time(NULL));
-	cout << "dim:? ";
-	cin >> dim;
-	Oracle oracle(dim);
-	oracle.readCoef();
+	if (!TEST) {
+		cout << "dimension:? ";
+		cin >> dim;
+	}
+	Oracle oracle;
+	oracle.readCoef(dim);
 	//oracle.output();
 
 	double *cselect = new double [n_init];
@@ -134,11 +151,13 @@ int main(){
 	double cy[1];
 	cy[0] = 1;
 
+	char buffer[8*1024];
 	if (!(ep = engOpen(NULL))) {
 		cerr << "\nCan't start MATLAB engine1\n";
 		return EXIT_FAILURE;
 	}
 	engSetVisible(ep, 0);
+	engOutputBuffer(ep, buffer, 8*1024);
 
 	mselect = mxCreateDoubleMatrix(1, n_init, mxREAL);
 	mdata = mxCreateDoubleMatrix(n_init, dim, mxREAL);
@@ -158,9 +177,9 @@ int main(){
 	memcpy((void *)mxGetPr(n), (void *)cn, sizeof(cn));
 
 	/*
-	for (int i = 0; i < n_init; i++) 
-		cout << "mselect" << i << " n " << cselect[i] << "-> " << *(double*)(mxGetPr(mselect) + i) << endl;
-	*/
+	   for (int i = 0; i < n_init; i++) 
+	   cout << "mselect" << i << " n " << cselect[i] << "-> " << *(double*)(mxGetPr(mselect) + i) << endl;
+	   */
 
 	int nsamples = 0;
 	for(int i = n_init + 1; i<50; i++){
@@ -187,6 +206,7 @@ int main(){
 
 		/**********************************************************************/
 		cout << BLUE << "-------------------query" << i << "------------------" << NORMAL;
+		cout << buffer << std::endl;
 
 		if(*mxGetPr(cease) == 50000){
 			nsamples = i-1;
@@ -197,7 +217,7 @@ int main(){
 			cx[j] = *(mxGetPr(new_x)+j);
 		cy[0] = oracle.classify(cx);
 
-	    if (cy[0] > 0)	cout << RED;
+		if (cy[0] > 0)	cout << RED;
 		else cout << GREEN;
 		cout << "<";
 		for(int j=0; j<dim; j++){ 
