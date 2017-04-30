@@ -1,5 +1,5 @@
+% function [x]=hit_n_run(x,A,T,u,l)
 function [x]=hit_n_run(x,A,T)
-% function [x]=hit_n_run(x,A,T)
 %
 %   Returns a random point using the hit and run algorithm from the
 % convex body defined by Ax>=0 and ||x||<=1. 
@@ -30,19 +30,17 @@ function [x]=hit_n_run(x,A,T)
 % ----------
 % Version 1.0 - May 4 2005
 
-x
-A
-T
 dim=length(x);
 x=x(:);
-u=randn(T,dim) % at step t the algorithm will pick a random point
+u=randn(T,dim); % at step t the algorithm will pick a random point
 % on the line through x and x+u(t,:)
-Au=u*A'
-nu=sum(u.^2,2)
+Au=u*A';
+nu=sum(u.^2,2);
 rng('shuffle');
-l=rand(T,1)
+l=rand(T,1);
 
 for t=1:T
+    %fprintf('----------------------------------------------------------------%d\n', t);
 	Ax=A*x;
 	ratio=-Ax./Au(t,:)';
 	I=(Au(t,:)>0);
@@ -56,7 +54,8 @@ for t=1:T
 		%                  'feasable point.']);
 		disp('Warning: Probably x is not a feasable point');  
 		disc=0;
-  end
+    end
+  %xut = x' * u(t, :)'
   hl=(-(x'*u(t,:)')+sqrt(disc))/nu(t);
   ll=(-(x'*u(t,:)')-sqrt(disc))/nu(t);
 

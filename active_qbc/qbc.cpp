@@ -65,39 +65,44 @@ void QBCLearner::clear()
 arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*/, size_t T) 
 {
 	//int dim = xpoint.size();
-	std::cout << "x:\n" << xpoint;
-	std::cout << "A:\n" << A;
-	std::cout << "T:\n" << T << std::endl;
+	//std::cout << "x:\n" << xpoint;
+	//std::cout << "A:\n" << A;
+	//std::cout << "T:\n" << T << std::endl;
 
 	//std::default_random_engine eg(time(0)); //seed
 	//std::normal_distribution<> rnd(0, 1);
-	std::cout << RED << "\n**************************HIT && RUN************************************>>\n" << BLUE;
+	//std::cout << RED << "\n**************************HIT && RUN************************************>>\n" << BLUE;
 	arma::colvec x = arma::vectorise(xpoint);
 	int dim = x.size();
 	arma::mat u = arma::randn<arma::mat>(T, dim);
-	std::cout << "u:\n" << u;
+	//std::cout << "u:\n" << u;
 	arma::mat Au = u * A.t();
-	std::cout << "Au:\n" << Au;
+	//std::cout << "Au:\n" << Au;
 	arma::mat nu = sum(u % u, 1);
-	std::cout << "nu:\n" << nu;
+	//std::cout << "nu:\n" << nu;
 	arma::colvec l = arma::randu<arma::colvec>(T);
-	std::cout << "l:\n" << l;
+	//std::cout << "l:\n" << l;
 
 	for(size_t t = 0; t < T; ++t) 
 	{
+		//std::cout << YELLOW << "----" << t << BLUE << std::endl;
 		arma::mat Ax = A * x;
 		arma::mat ratio = -Ax / Au.row(t).t();
+		//std::cout << "ratio: \n" << ratio;
 		double mn = std::numeric_limits<double>::min();
 		double mx = std::numeric_limits<double>::max();
-		for (size_t ii = 0; ii < Au.n_cols; ++ii)
-		{
+		for (size_t ii = 0; ii < Au.n_cols; ++ii) {
 			double value = Au(t, ii);
-			if (value > 0 && value > mn) mn = value;
-			if (value < 0 && value < mx) mx = value;
+			double ratio_value = ratio(ii);
+			if (value > 0 && ratio_value > mn) mn = ratio_value;
+			if (value < 0 && ratio_value < mx) mx = ratio_value;
 		}
+		//std::cout << "mx=" << mx << std::endl;
+		//std::cout << "mn=" << mn << std::endl;
 		//arma::mat xut = x.t() * u.row(t).t();
 		//double disc = std::pow(xut(0, 0), 2) - nu(t) * (std::pow(norm(x), 2) - 1);
 		double disc = std::pow(dot(x.t(), u.row(t).t()), 2) - nu(t) * (std::pow(norm(x), 2) - 1);
+		//std::cout << "disc=" << disc << std::endl;
 		//double disc = std::pow(x.t() * u.row(t).t(), 2) - nu(t) * (std::pow(norm(x), 2)- 1);
 		//double disc = 0; 
 		if (disc < 0) 
@@ -107,14 +112,19 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 		}
 		//double hl = (-xut(0, 0) + std::sqrt(disc)) / nu(t);
 		//double ll = (-xut(0, 0) - std::sqrt(disc)) / nu(t);
+		//double xut = dot(x.t(), u.row(t).t());
+		//std::cout << "xut=" << xut << std::endl;
 		double hl = (-dot(x.t(), u.row(t).t()) + std::sqrt(disc)) / nu(t);
 		double ll = (-dot(x.t(), u.row(t).t()) - std::sqrt(disc)) / nu(t);
 
 		if (hl < mx) mx = hl;
 		if (ll > mn) mn = ll;
+		//std::cout << "hl=" << hl << std::endl;
+		//std::cout << "ll=" << ll << std::endl;
 		x = x + u.row(t).t() * (mn + l(t) * (mx - mn));
+		//std::cout << "x:" << x;
 	}
-	std::cout << "\n**************************HIT && RUN************************************<<\n" << NORMAL;
+	//std::cout << "\n**************************HIT && RUN************************************<<\n" << NORMAL;
 	return x;
 }
 
@@ -265,27 +275,24 @@ arma::vec QBCLearner::new_query(size_t T) {
 	std::cout << "Usub:\n" << usub;
 
 
-
 	arma::mat A = U.submat(Sall, Sselect) * diagmat(SI);
 	std::cout << "A:\n" << A; 
 
 
-
 	arma::mat Ydiag = diagmat(_labels.submat(selection, first_element));
-	std::cout << "Ydiag:\n" << Ydiag;
+	//std::cout << "Ydiag:\n" << Ydiag;
 	arma::mat Kselection = K.submat(selection, selection);
-	std::cout << "Kselection:\n" << Kselection; 
+	//std::cout << "Kselection:\n" << Kselection; 
 	arma::mat restri = diagmat(_labels.submat(selection, first_element)) * K.submat(selection, selection) * A;
-	std::cout << "restri:\n" << restri;
+	//std::cout << "restri:\n" << restri;
 	//arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
 	
 	arma::mat pinvA = pinv(A);
-	std::cout << "pinvA:\n" << pinvA;
+	//std::cout << "pinvA:\n" << pinvA;
 
-	
 	std::cout << "coef:\n" << coef; 
 	arma::mat coefselection = coef.submat(selection, first_element);
-	std::cout << "coefselection:\n" << coefselection; 
+	//std::cout << "coefselection:\n" << coefselection; 
 
 	arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
 	std::cout << "-->co1:" << co1;
@@ -294,8 +301,22 @@ arma::vec QBCLearner::new_query(size_t T) {
 	std::cout << "-->co1:" << co1;
 	std::cout << "-->co2:" << co2;
 
-	arma::vec w1 = _data.submat(selection, Sall).t() * (A * co1);
-	arma::vec w2 = _data.submat(selection, Sall).t() * (A * co2);
+	arma::vec aco1 = A * co1;
+	arma::vec aco2 = A * co2;
+	std::cout << "-->A:" << A;
+	std::cout << "-->aco1:" << aco1;
+	std::cout << "-->aco2:" << aco2;
+
+	std::cout << "selection:\n" << selection; 
+	std::cout << "sall:\n" << Sall; 
+	arma::mat sub1 = _data.rows(selection);
+	arma::mat sub2 = _data.rows(selection);
+	std::cout << "-->sub1:" << sub1;
+	std::cout << "-->sub2:" << sub2;
+
+	
+	arma::vec w1 = _data.rows(selection).t() * (A * co1);
+	arma::vec w2 = _data.rows(selection).t() * (A * co2);
 
 	std::cout << "---->w1: " << w1;
 	std::cout << "---->w2: " << w2;
@@ -354,6 +375,6 @@ int main()
 	//l.add({-1.0}, -1.0);
 	//tmpl.add({-2.0}, -1.0);
 	//l.add({-3.0}, -1.0);
-	l.learn_linear(10);
+	//l.learn_linear(10);
 	//LinearConstraint cons = learn_linear(10);
 }
