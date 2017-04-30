@@ -65,6 +65,9 @@ void QBCLearner::clear()
 arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*/, size_t T) 
 {
 	//int dim = xpoint.size();
+	std::cout << "x:\n" << xpoint;
+	std::cout << "A:\n" << A;
+	std::cout << "T:\n" << T << std::endl;
 
 	//std::default_random_engine eg(time(0)); //seed
 	//std::normal_distribution<> rnd(0, 1);

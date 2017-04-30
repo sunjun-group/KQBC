@@ -30,7 +30,9 @@ function [x]=hit_n_run(x,A,T)
 % ----------
 % Version 1.0 - May 4 2005
 
-
+x
+A
+T
 dim=length(x);
 x=x(:);
 u=randn(T,dim) % at step t the algorithm will pick a random point
