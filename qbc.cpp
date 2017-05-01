@@ -83,12 +83,12 @@ class Oracle {
 
 
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
 	if (argc > 1)
 		TEST = true;
 
 	int dim = 2;
-	int init_sample_num = 8;
+	int init_sample_num = 4;
 
 	srand(time(NULL));
 	if (!TEST) {
@@ -232,6 +232,7 @@ int main(int argc, char** argv){
 
 		/**********************************************************************/
 //%function [errors,coef,w,selection,Y_train] = predict(X_train, Y_train,w1,w2,coef,ii,selection,y)  
+		cout << "predict......\n";
 		memcpy((void *)mxGetPr(y), (void *)cy, sizeof(cy));
 		engPutVariable(ep, "X_train", data);
 		engPutVariable(ep, "Y_train", label);

@@ -10,7 +10,6 @@
 #include "oracle.h"
 //#include <random>
 
-int _status = 0;
 int itime = 0;
 const double tolerance = 1.0e-10;
 
@@ -162,145 +161,218 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 	return x;
 }
 
-
-bool QBCLearner::learn_linear(size_t T) {
+//LinearConstraint QBCLearner::learn_linear(size_t T)
+void QBCLearner::learn_linear(size_t T)
+{
 	_data.resize(_data_occupied, _names.size());
 	_labels.resize(_data_occupied);
 
 	arma::mat coefs;
 	arma::mat errors;
-	arma::vec w1, w2;
-	arma::vec co1, co2;
-	arma::colvec coef;
+
 	arma::mat K = _data * _data.t();
-	arma::mat A;
-	for(int iteration = 0; iteration <= 20; iteration++) {
-		std::cout << GREEN << BOLD << "################################################################################################## " << iteration << NORMAL << std::endl;
-		arma::uvec selection(_data_occupied);
-		for (size_t i = 0; i < _data_occupied; i++)
-		{
-			selection[i] = i;
-			//std::cout << "selection:" << i << "\n" << selection << std::endl;
-		}
+	size_t length = _labels.size();
 
-		coef = arma::zeros(_data_occupied);
-		coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
+	arma::colvec coef = arma::zeros(length);
+	coef.at(0) = _labels.at(0)/std::sqrt(K.at(0, 0));
 
-		std::cout << "data: \n" << _data << std::endl;
-		std::cout << "label: \n" << _labels.t() << std::endl;
-		//std::cout << "K: \n" << K << std::endl;
-		//std::cout << "selection:\n" << selection << std::endl;
+	arma::uvec selection;
+	selection << 0;
 
-		//for (size_t ii = 1; ii != length; ++ii) {
-		arma::mat Ksub = K.submat(selection, selection);
+	for (size_t ii = 1; ii != length; ++ii) {
+		arma::uvec extension = selection;
+		extension << ii;
+		arma::mat Ksub = K.submat(extension, extension);
 		arma::mat S;
 		arma::mat U;
 		arma::schur(U, S, Ksub);
-		//std::cout << "Ksub:\n" << Ksub; 
-		//std::cout << "U:\n" << U; 
-		//std::cout << "S:\n" << S; 
 
 		arma::vec Sdiag = S.diag();
-		//std::cout << "Sdiag:\n" << Sdiag; 
-		arma::uvec Sall(_data_occupied);
-		arma::uvec Sselect(_data_occupied);
-		int k = 0;
+		arma::uvec Sall;
+		arma::uvec Sselect;
 		for (size_t i = 0; i != Sdiag.size(); ++i) {
-			Sall[i] = i;
+			Sall << i;
 			if (Sdiag.at(i) > tolerance) {
-				Sselect[k++] = i;
+				Sselect << i;
 			}
 		}
-		Sselect.resize(k);
-		//std::cout << "Sselect:\n" << Sselect; 
-		//std::cout << "Sall:\n" << Sall; 
 
 		arma::uvec first_element;
 		first_element << 0;
 
-		//std::cout << "-----> \n" << Sdiag.submat(Sselect, first_element);
-		//arma::vec SI = arma::pow(Sdiag.submat(Sselect, first_element), -0.5);
 		arma::vec SI = arma::pow(Sdiag.submat(Sselect, first_element), -0.5);
-		//std::cout << "SI:\n" << SI; 
+		arma::mat A = U.submat(Sall, Sselect) * SI.diag();
 
-		//arma::mat Sidiag = diagmat(SI);
-		//std::cout << "Sidiag:\n" << Sidiag;
-		//arma::mat usub = U.submat(Sall, Sselect);
-		//arma::mat usub = U.cols(Sselect);
-		//std::cout << "Usub:\n" << usub;
-
-
-		//arma::mat A = U.submat(Sall, Sselect) * diagmat(SI);
-		A = U.cols(Sselect) * diagmat(SI);
-		//std::cout << "A:\n" << A; 
-
-
-		//arma::mat Ydiag = diagmat(_labels.submat(selection, first_element));
-		//std::cout << "Ydiag:\n" << Ydiag;
-		//arma::mat Kselection = K.submat(selection, selection);
-		//std::cout << "Kselection:\n" << Kselection; 
-		arma::mat restri = diagmat(_labels.submat(selection, first_element)) * K.submat(selection, selection) * A;
-		//std::cout << "restri:\n" << restri;
-		//arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
-
-		arma::mat pinvA = pinv(A);
-		//std::cout << "pinvA:\n" << pinvA;
-
-		//std::cout << "coef:\n" << coef; 
-		arma::mat coefselection = coef.submat(selection, first_element);
-		//std::cout << "coefselection:\n" << coefselection; 
-
-		arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
-		//std::cout << "-->co1:" << co1;
+		arma::mat restri = _labels.submat(Sselect, first_element) * K.submat(selection, extension) * A;
+		arma::vec co1 = arma::pinv(A) * coef.submat(extension, first_element);
 		arma::vec co2 = hit_and_run(co1, restri, T);
 		co1 = hit_and_run(co2, restri, T);
-		std::cout << "---->co1:" << co1.t();
-		std::cout << "---->co2:" << co2.t();
+		std::cout << "co1:" << co1;
+		std::cout << "co2:" << co2;
 
-		arma::vec aco1 = A * co1;
-		arma::vec aco2 = A * co2;
-		//std::cout << "-->A:" << A;
-		//std::cout << "-->aco1:" << aco1;
-		//std::cout << "-->aco2:" << aco2;
+		/*arma::vec temp = K.row(ii);
+		  temp = temp.submat(first_element, extension);
+		  double pred1 = dot(temp, A * co1);
+		  double pred2 = dot(temp, A * co2);
+		  */
+		arma::uvec iivec;
+		iivec << ii;
+		double pred1 = dot(K.submat(iivec, extension), A * co1);
+		double pred2 = dot(K.submat(iivec, extension), A * co2);
 
-		//std::cout << "selection:\n" << selection; 
-		//std::cout << "sall:\n" << Sall; 
-		arma::mat sub1 = _data.rows(selection);
-		arma::mat sub2 = _data.rows(selection);
-		//std::cout << "-->sub1:" << sub1;
-		//std::cout << "-->sub2:" << sub2;
-
-
-		//arma::vec w1 = _data.rows(selection).t() * (A * co1);
-		//arma::vec w2 = _data.rows(selection).t() * (A * co2);
-		w1 = _data.rows(selection).t() * (A * co1);
-		w2 = _data.rows(selection).t() * (A * co2);
-
-		std::cout << "---->w1: " << w1.t();
-		std::cout << "---->w2: " << w2.t();
-
-		if (w1.size() == w2.size()) {
-			size_t j;
-			for (j = 0; j < w1.size(); j++) {
-				if (w1(j) != w2(j))
-					break;
-			}
-			if (j >= w1.size()) {
-				std::cout << GREEN << "Converged. Found out the weight vector: \n" << w1;
-				_weight = w1;
-				break;
-				//return true;
+		if (pred1 * pred2 <= 0) {
+			itime++;
+			selection = extension;
+			if (_labels.at(ii) * pred1 >= 0) {
+				coef.submat(first_element, extension) = A * co1;
+			} else {
+				coef.submat(first_element, extension) = A * co2;
 			}
 		}
 
-		arma::vec xx = samplingF(w1, w2);
-		if (_status != 0) break;
-		double yy = categorizeF(xx); 
-		std::cout << YELLOW << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL<< std::endl;
-		addVec(xx, yy);
-		std::cout << YELLOW << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL<< std::endl;
-		K = _data * _data.t();
+		// TODO ...
+		coefs = arma::join_horiz(coefs, coef);
+		arma::vec preds = _labels % (K * coef);
+		double errate = arma::sum(preds<=0) / double(length);
+		errors << errate;
+		std::cout << "------------------------------------------------\n";
+		std::cout << "Step: " << ii << "\nselection:\n" << selection << "\ncoef: \n" << _data.t() * coef << "\nerror: " << errate * 100 << "%\n"; 
+
+		//errors << 
 	}
+	std::cout << "\ncoefs:\n" << coefs;
+	std::cout << "TIMES: " << itime << std::endl;
+
+}
+
+
+bool QBCLearner::learn(size_t T) {
+	_data.resize(_data_occupied, _names.size());
+	_labels.resize(_data_occupied);
+
+	arma::mat coefs;
+	arma::mat errors;
+	arma::uvec selection(_data_occupied);
+	for (size_t i = 0; i < _data_occupied; i++)
+	{
+		//selection << i;
+		selection[i] = i;
+		//std::cout << "selection:" << i << "\n" << selection << std::endl;
+	}
+
+	arma::mat K = _data * _data.t();
+	arma::colvec coef = arma::zeros(_data_occupied);
+	coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
+
+	std::cout << "data: \n" << _data << std::endl;
+	std::cout << "label: \n" << _labels.t() << std::endl;
+	//std::cout << "K: \n" << K << std::endl;
+	//std::cout << "selection:\n" << selection << std::endl;
+
+	//for (size_t ii = 1; ii != length; ++ii) {
+	arma::mat Ksub = K.submat(selection, selection);
+	arma::mat S;
+	arma::mat U;
+	arma::schur(U, S, Ksub);
+	//std::cout << "Ksub:\n" << Ksub; 
+	//std::cout << "U:\n" << U; 
+	//std::cout << "S:\n" << S; 
+
+	arma::vec Sdiag = S.diag();
+	//std::cout << "Sdiag:\n" << Sdiag; 
+	arma::uvec Sall(_data_occupied);
+	arma::uvec Sselect(_data_occupied);
+	int k = 0;
+	for (size_t i = 0; i != Sdiag.size(); ++i) {
+		Sall[i] = i;
+		if (Sdiag.at(i) > tolerance) {
+			Sselect[k++] = i;
+		}
+	}
+	Sselect.resize(k);
+	//std::cout << "Sselect:\n" << Sselect; 
+	//std::cout << "Sall:\n" << Sall; 
+
+	arma::uvec first_element;
+	first_element << 0;
+
+	//std::cout << "-----> \n" << Sdiag.submat(Sselect, first_element);
+	//arma::vec SI = arma::pow(Sdiag.submat(Sselect, first_element), -0.5);
+	arma::vec SI = arma::pow(Sdiag.submat(Sselect, first_element), -0.5);
+	//std::cout << "SI:\n" << SI; 
+
+	//arma::mat Sidiag = diagmat(SI);
+	//std::cout << "Sidiag:\n" << Sidiag;
+	//arma::mat usub = U.submat(Sall, Sselect);
+	//arma::mat usub = U.cols(Sselect);
+	//std::cout << "Usub:\n" << usub;
+
+
+	//arma::mat A = U.submat(Sall, Sselect) * diagmat(SI);
+	arma::mat A = U.cols(Sselect) * diagmat(SI);
+	//std::cout << "A:\n" << A; 
+
+
+	//arma::mat Ydiag = diagmat(_labels.submat(selection, first_element));
+	//std::cout << "Ydiag:\n" << Ydiag;
+	//arma::mat Kselection = K.submat(selection, selection);
+	//std::cout << "Kselection:\n" << Kselection; 
+	arma::mat restri = diagmat(_labels.submat(selection, first_element)) * K.submat(selection, selection) * A;
+	//std::cout << "restri:\n" << restri;
+	//arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
+
+	arma::mat pinvA = pinv(A);
+	//std::cout << "pinvA:\n" << pinvA;
+
+	//std::cout << "coef:\n" << coef; 
+	arma::mat coefselection = coef.submat(selection, first_element);
+	//std::cout << "coefselection:\n" << coefselection; 
+
+	arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
+	//std::cout << "-->co1:" << co1;
+	arma::vec co2 = hit_and_run(co1, restri, T);
+	co1 = hit_and_run(co2, restri, T);
+	std::cout << "---->co1:" << co1.t();
+	std::cout << "---->co2:" << co2.t();
+
+	arma::vec aco1 = A * co1;
+	arma::vec aco2 = A * co2;
+	//std::cout << "-->A:" << A;
+	//std::cout << "-->aco1:" << aco1;
+	//std::cout << "-->aco2:" << aco2;
+
+	//std::cout << "selection:\n" << selection; 
+	//std::cout << "sall:\n" << Sall; 
+	arma::mat sub1 = _data.rows(selection);
+	arma::mat sub2 = _data.rows(selection);
+	//std::cout << "-->sub1:" << sub1;
+	//std::cout << "-->sub2:" << sub2;
+
+
+	arma::vec w1 = _data.rows(selection).t() * (A * co1);
+	arma::vec w2 = _data.rows(selection).t() * (A * co2);
+
+	std::cout << "---->w1: " << w1.t();
+	std::cout << "---->w2: " << w2.t();
+
+	if (w1.size() == w2.size()) {
+		size_t j;
+		for (j = 0; j < w1.size(); j++) {
+			if (w1(j) != w2(j))
+				break;
+		}
+		if (j >= w1.size()) {
+			std::cout << GREEN << "Converged. Found out the weight vector: \n" << w1;
+			_weight = w1;
+			return true;
+		}
+	}
+
+	arma::vec xx = samplingF(w1, w2);
+	double yy = categorizeF(xx); 
+	std::cout << YELLOW << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL<< std::endl;
+	addVec(xx, yy);
+	std::cout << YELLOW << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL<< std::endl;
 
 
 	//arma::uvec iivec;
@@ -314,13 +386,11 @@ bool QBCLearner::learn_linear(size_t T) {
 	//	itime++;
 	//	selection = extension;
 	//std::cout << "Y:\n" << _labels; 
-	std::cout << BLUE << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL << std::endl;
 	if (_labels.at(_data_occupied-1) * pred1 >= 0) {
 		coef = A * co1;
 	} else {
 		coef = A * co2;
 	}
-	std::cout << BLUE << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL << std::endl;
 	//}
 
 	std::cout << "coef: \n" << coef.t();
@@ -329,6 +399,7 @@ bool QBCLearner::learn_linear(size_t T) {
 	std::cout << BLUE << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL << std::endl;
 	coef.at(coef.size()) = 0;
 	coef.resize(coef.size()+1);
+	K = _data * _data.t();
 	//std::cout << "K:\n" << K; 
 	//std::cout << "data:\n" << _data; 
 	//std::cout << "Y:\n" << _labels; 
@@ -342,7 +413,6 @@ bool QBCLearner::learn_linear(size_t T) {
 	//std::cout << "\nselection:\n" << selection;
 	std::cout << YELLOW << BOLD << "weight: \n" << _weight << NORMAL;
 	std::cout << "\nerror: " << errate * 100 << "%\n"; 
-	//}
 	return false;
 }
 
@@ -362,7 +432,6 @@ arma::vec activeSampling(arma::vec w1, arma::vec w2) {
 		}
 	}
 	std::cout << "Tried 50000 times, can not find solutions inside the following matrix:\n" << w1 << "----\n" << w2 << std::endl;
-	_status = 1;
 	return s;
 }
 
@@ -418,8 +487,36 @@ int main(int argc, char** argv) {
 	   l.add({3.0, -3.0}, -1.0);
 	   l.add({-4.0, 4.0}, -1.0);
 	   */
-	l.learn_linear(100);
-	std::cout << l << std::endl;
+	for (int i = 0; i < 20; i++) {
+		std::cout << GREEN << BOLD << "################################################################################################## " << i << NORMAL << std::endl;
+		l.learn(100);
+		std::cout << l << std::endl;
+	}
+	/*
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);*/
 	//l.add({2.0, 0.0}, -1.0);
 	//QBCLearner l({"x"});
 	//l.add({1.0}, 1.0);

@@ -36,6 +36,8 @@
 #define BOLD "\e[1m"
 #define UNDERLINE "\e[4m"
 
+//class Oracle;
+
 const size_t qbc_learner_default_problem_size = 1 << 16;
 
 class QBCLearner {
@@ -44,8 +46,6 @@ protected:
     size_t _data_occupied;
     arma::mat _data;
     arma::vec _labels;
-	arma::vec (*sampling)(arma::vec w1, arma::vec w2);
-	bool (*oracle)(arma::vec x);
 	arma::vec _weight;
     
 public:
@@ -57,7 +57,10 @@ protected:
     bool increase_problem_size();
 
 public:
+	arma::vec (*samplingF)(arma::vec w1, arma::vec w2);
+	double (*categorizeF)(arma::vec x);
     bool add(const std::vector<double> &values, const double &y);
+    bool addVec(const arma::vec &values, const double &y);
     //bool add(const std::map<std::string, double> &valuator, const double &y);
     void clear();
     
@@ -75,8 +78,7 @@ friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
 
 public:
     //LinearConstraint learn_linear(size_t T);
-    void learn_linear(size_t T);
-	bool learn(size_t T);
+    bool learn_linear(size_t T);
 	arma::vec hit_and_run(arma::vec xpoint, arma::mat constraintMat, size_t T);
 };
 
