@@ -1,0 +1,8 @@
+cd to current folder
+
+sudo g++-6 try.cpp -o newtry -I/usr/local/MATLAB/R2017a/extern/include -leng -lmat -lmx -lmex -lut -L/usr/local/MATLAB/R2017a/bin/glnxa64 -Wl,-rpath=/usr/local/MATLAB/R2017a/bin/glnxa64
+
+note:
+1. g++ must be newer than 5.0.0;
+2. include with right path, and the -Wl,-rpath.
+
