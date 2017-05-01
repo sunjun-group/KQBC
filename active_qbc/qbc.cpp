@@ -105,8 +105,7 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 		//std::cout << "disc=" << disc << std::endl;
 		//double disc = std::pow(x.t() * u.row(t).t(), 2) - nu(t) * (std::pow(norm(x), 2)- 1);
 		//double disc = 0; 
-		if (disc < 0) 
-		{
+		if (disc < 0) {
 			std::cout << "negative disc " << disc <<  ". Probably x is not a ' ... 'feasable point.\n";
 			disc = 0;
 		}
@@ -213,7 +212,7 @@ void QBCLearner::learn_linear(size_t T)
 }
 
 
-arma::vec QBCLearner::new_query(size_t T) {
+bool QBCLearner::learn(size_t T) {
 	_data.resize(_data_occupied, _names.size());
 	_labels.resize(_data_occupied);
 
@@ -286,7 +285,7 @@ arma::vec QBCLearner::new_query(size_t T) {
 	arma::mat restri = diagmat(_labels.submat(selection, first_element)) * K.submat(selection, selection) * A;
 	//std::cout << "restri:\n" << restri;
 	//arma::vec co1 = arma::pinv(A) * coef.submat(selection, first_element);
-	
+
 	arma::mat pinvA = pinv(A);
 	//std::cout << "pinvA:\n" << pinvA;
 
@@ -314,13 +313,27 @@ arma::vec QBCLearner::new_query(size_t T) {
 	std::cout << "-->sub1:" << sub1;
 	std::cout << "-->sub2:" << sub2;
 
-	
+
 	arma::vec w1 = _data.rows(selection).t() * (A * co1);
 	arma::vec w2 = _data.rows(selection).t() * (A * co2);
 
 	std::cout << "---->w1: " << w1;
 	std::cout << "---->w2: " << w2;
-	return w1;
+
+	if (w1.size() == w2.size()) {
+		size_t j;
+		for (j = 0; j < w1.size(); j++) {
+			if (w1(j) != w2(j))
+				break;
+		}
+		if (j >= w1.size()) {
+			std::cout << GREEN << "Converged. Found out the weight vector: \n" << w1;
+			_weight = w1;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -331,17 +344,18 @@ int main()
 	//l.add({-1.0, -1.0, -1.0}, -1.0);
 	QBCLearner l({"x", "y"});
 	/*
-	l.add({1.0, 1.0}, 1.0);
-	l.add({1.0, 0.0}, 1.0);
-	l.add({1.0, -1.0}, -1.0);
-	l.add({-1.0, 1.0}, -1.0);
-	*/
+	   l.add({1.0, 1.0}, 1.0);
+	   l.add({1.0, 0.0}, 1.0);
+	   l.add({1.0, -1.0}, -1.0);
+	   l.add({-1.0, 1.0}, -1.0);
+	   */
 
 	l.add({1.0, 1.0}, 1.0);
 	l.add({2.0, 2.0}, 1.0);
 	l.add({3.0, -3.0}, -1.0);
 	l.add({-4.0, 4.0}, -1.0);
-	l.new_query(6);
+	l.learn(100);
+	std::cout << l << std::endl;
 	/*
 	   l.add({1.0, 1.0}, 1.0);
 	   l.add({1.0, 0.0}, 1.0);

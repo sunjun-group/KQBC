@@ -44,6 +44,9 @@ protected:
     size_t _data_occupied;
     arma::mat _data;
     arma::vec _labels;
+	arma::vec (*sampling)(arma::vec w1, arma::vec w2);
+	bool (*oracle)(arma::vec x);
+	arma::vec _weight;
     
 public:
     QBCLearner(const std::vector<std::string> &names) : _names(names)
@@ -58,10 +61,22 @@ public:
     //bool add(const std::map<std::string, double> &valuator, const double &y);
     void clear();
     
+friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
+		if (qbc._weight.size() <= qbc._names.size()) {
+			std::cout << "The learner has not started yet.\n";
+			return out;
+		}
+		for (int i = 0; i < qbc._weight.size(); i++) {
+			std::cout << YELLOW << qbc._weight(i) << BLUE << " * " << qbc._names[i] << NORMAL;
+		}
+		std::cout << " >= 0" << std::endl;
+		return out;
+	}
+
 public:
     //LinearConstraint learn_linear(size_t T);
     void learn_linear(size_t T);
-	arma::vec new_query(size_t T);
+	bool learn(size_t T);
 	arma::vec hit_and_run(arma::vec xpoint, arma::mat constraintMat, size_t T);
 };
 

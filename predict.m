@@ -2,7 +2,7 @@
 
 	tol = 1e-10;   %tolerance for the factor function error,
 	Y_train=[Y_train; y];
-	extension = [selection ii];
+	%extension = [selection ii];
 
 	pred1 = X_train(ii,:)*w1;
 	pred2 = X_train(ii,:)*w2;
@@ -14,7 +14,8 @@
 	end
 
 	coef = [coef; 0];
-	selection = extension;
+	%selection = extension;
+    selection = [selection ii];
 	preds = X_train*X_train'*coef;
 	error = sum(Y_train.*preds <=0)/length(Y_train);
 %	errors=[errors;error];
