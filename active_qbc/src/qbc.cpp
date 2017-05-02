@@ -27,20 +27,13 @@ bool QBCLearner::add(const std::vector<double> &values, const double &y)
 		}
 	}
 
-	std::cout << "++* ";
 	for (size_t index = 0; index != values.size(); ++index) {
 		const double &value = values.at(index);
-		//std::cout << " >" << value;
 		_data.at(_data_occupied, index) = value;
 	}
-	//std::cout << std::endl;
 
 	_labels.at(_data_occupied) = y;
 	++_data_occupied;
-
-	//_data.resize(_data_occupied, values.size());
-	//_labels.resize(_data_occupied);
-	//std::cout << "->" << _data << std::endl;
 
 	return true;
 }
@@ -256,10 +249,10 @@ bool QBCLearner::learn_linear(size_t T) {
 		errate = arma::sum(preds<=0) / _data_occupied;
 		errors << errate;
 		_weight = _data.t() * coef;
-		std::cout << "weight:\n" << YELLOW << BOLD << _weight.t() << NORMAL;
-		std::cout << "Step: " << _data_occupied << std::endl;
+		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
+		//std::cout << "Step: " << _data_occupied << std::endl;
 		//std::cout << "\nselection:\n" << selection;
-		std::cout << "error: " << errate * 100 << "%\n"; 
+		std::cout << "accuracy: " << (1-errate) * 100 << "%\n"; 
 	}
 	return false;
 }

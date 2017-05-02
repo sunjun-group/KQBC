@@ -16,11 +16,11 @@ class Oracle {
 
 		void readCoef(int _dim) {
 			if (TEST) {
-				_dim = 2;
+				_dim = 3;
 				_w.zeros(_dim);
 				_w[0] = -1;
 				_w[1] = 2;
-				//_w[2] = 0;
+				_w[2] = 0;
 			} else {
 				//for (int i = 0; i < _dim+1; i++) {
 				_w.zeros(_dim);
@@ -38,10 +38,12 @@ class Oracle {
 			return (res>=0? 1 : -1);
 		}
 
+		/*
 		void output() {
 			for (int i = 0; i < _dim+1; i++)
 				std::cout << i << " -- " << _w[i] << std::endl;
 		}
+		*/
 
 	private:
 		int _dim;
