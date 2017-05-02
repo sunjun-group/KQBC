@@ -1,0 +1,6 @@
+*.out
+tmp/
+bin
+data
+build
+tags

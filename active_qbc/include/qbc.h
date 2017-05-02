@@ -14,30 +14,12 @@
 #include <memory>
 #include <map>
 #include <cmath>
-
 #include <armadillo>
+#include "color.h"
 
-#define RED "\e[31m"
-#define GREEN "\e[32m"
-#define YELLOW "\e[33m"
-#define BLUE "\e[34m"
-#define MAGENTA "\e[35m"
-#define CYAN "\e[36m"
-#define LIGHT_GRAY "\e[37m"
-#define DARK_GRAY "\e[90m"
-#define LIGHT_RED "\e[91m"
-#define LIGHT_GREEN "\e[92m"
-#define LIGHT_YELLOW "\e[93m"
-#define LIGHT_BLUE "\e[94m" 
-#define LIGHT_MAGENTA "\e[95m"
-#define LIGHT_CYAN "\e[96m"
-//case WHITE: // white
-#define NORMAL "\e[0m"
-#define BOLD "\e[1m"
-#define UNDERLINE "\e[4m"
 
-//class Oracle;
-
+const double tolerance = 1.0e-10;
+const int MAX_ITERATION = 30;
 const size_t qbc_learner_default_problem_size = 1 << 16;
 
 class QBCLearner {
@@ -71,7 +53,7 @@ friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
 			return out;
 		}
 		*/
-		for (int i = 0; i < qbc._weight.size(); i++) {
+		for (size_t i = 0; i < qbc._weight.size(); i++) {
 			std::cout << YELLOW << qbc._weight(i) << BLUE << " * " << qbc._names[i] << NORMAL;
 			if (i < qbc._weight.size() - 1)
 				std::cout << " + ";

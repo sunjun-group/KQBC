@@ -1,3 +1,5 @@
+#ifndef __oracle__
+#define __oracle__
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -45,3 +47,4 @@ class Oracle {
 		int _dim;
 		arma::vec _w;
 };
+#endif
