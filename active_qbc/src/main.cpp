@@ -12,6 +12,7 @@
 
 int _status = 0;
 int upbound = 100;
+bool TEST = false;
 Oracle oracle;
 
 arma::vec activeSampling(arma::vec w1, arma::vec w2) {
@@ -86,6 +87,7 @@ int main(int argc, char** argv) {
 	   */
 	l.learn_linear(100);
 	std::cout << l << std::endl;
+	l.convert();
 	//l.add({2.0, 0.0}, -1.0);
 	//QBCLearner l({"x"});
 	//l.add({1.0}, 1.0);
