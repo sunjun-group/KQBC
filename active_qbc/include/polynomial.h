@@ -26,6 +26,19 @@ static bool _roundoff(double x, double& roundx)
 	return false;
 }
 
+
+static bool _roundoffvector(std::vector<double>& v) {
+	std::vector<double> ret = v;
+	for (size_t i = 0; i < v.size(); i++) {
+		if (_roundoff(v[i], ret[i]) == false)
+			return false;
+	}
+	v = ret;
+	return true;
+}
+
+
+
 static bool scale(std::vector<double>& v, double times) {
 	if (times == 0) return false;
 	//std::cout << poly.get_dim() << "--";
@@ -91,6 +104,7 @@ class Polynomial{
 			_names = names;
 		}
 
+		
 		std::vector<double> roundoff() {
 			std::vector<double> ret = _values;
 
@@ -100,48 +114,35 @@ class Polynomial{
 					max = std::abs(_values[i]);
 				}
 			}
+			//std::cout << "dim: " << _dim << std::endl;
 			double min = max;
-			for (int i = 0; i < _dim - 1; i++) {
+			for (int i = 0; i < _dim; i++) {
 				if (std::abs(_values[i]) == 0) continue;
-				if (std::abs(_values[i]) * pow(10, PRECISION) < max) {
+				/*if (std::abs(_values[i]) * pow(100, PRECISION) < max) {
 					ret[i] = 0;
 					continue;
 				}
+				*/
 				if (std::abs(_values[i]) < min) {
 					min = std::abs(_values[i]);
 				}
 			}
+			scale(ret, 1.0/min);
+			//std::cout << "min=" << min << std::endl;
 
-
-			std::cout << GREEN << "Before roundoff: ";
-			printVector(_values);
-			std::cout << " min=" << min << std::endl;
-
-			//std::vector<double> backup = ret;
-			double scale_up = 2;
+			int scale_up = 2;
 			while(scale_up <= 100) {
-				int i;
-				for (i = 0; i < _dim; i++) {
-					if (_roundoff(ret[i] / min, ret[i]) == false) {
-						//std::cout << RED << "scale X10:" << GREEN << *this << std::endl;
-						scale(ret, scale_up/(scale_up-1));
-						scale_up++;
-						break;
-					} 
-				}
-				if (i >= _dim)
+				if (_roundoffvector(ret) == true) {
 					break;
+				} 
+				scale(ret, (1.0 * scale_up)/(scale_up-1));
+				scale_up++;
 			}
 			if (scale_up > 100) {
 				for (int i = 0; i < _dim - 1; i++) {
 					_roundoff(ret[i] / min, ret[i]);
 				}
 			}
-
-			//ret[_dim-1] = floor((int)ret[_dim-1] / min);
-			std::cout << GREEN << "Middle: ";
-			printVector(ret);
-			std::cout << std::endl;
 
 			int poly_gcd = ngcd(ret);
 			if (poly_gcd > 1) {
@@ -157,13 +158,9 @@ class Polynomial{
 			return ret;
 		}
 
-
 	private:
 		int _dim;
 		std::vector<double> _values;
 		std::vector<std::string> _names;
 };
-
-
-
 #endif

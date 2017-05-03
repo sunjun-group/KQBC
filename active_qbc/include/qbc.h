@@ -22,7 +22,6 @@ protected:
     arma::mat _data;
     arma::vec _labels;
 	arma::vec _weight;
-	Polynomial _poly;
     
 public:
     QBCLearner(const std::vector<std::string> &names) : _names(names)
@@ -52,17 +51,17 @@ friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
 			if (i < qbc._weight.size() - 1)
 				std::cout << " + ";
 		}
-		std::cout << " >= 0" << std::endl;
+		std::cout << " >= 0";
 		return out;
 	}
 
 public:
     bool learn_linear(size_t T);
 	arma::vec hit_and_run(arma::vec xpoint, arma::mat constraintMat, size_t T);
-	void convert() {
-		_poly.setValues(_weight);
-		_poly.setNames(_names);
-		_poly.roundoff();
+	void roundoff() {
+		Polynomial poly;
+		poly.setValues(_weight);
+		_weight = poly.roundoff();
 	}
 };
 

@@ -145,6 +145,8 @@ bool QBCLearner::learn_linear(size_t T) {
 	arma::mat A;
 	arma::vec preds;
 	double errate;
+		coef = arma::zeros(_data_occupied);
+		coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
 	for(int iteration = 0; iteration <= MAX_ITERATION; iteration++) {
 		std::cout << GREEN << BOLD << "################################################################################################## " << iteration << NORMAL << std::endl;
 		arma::uvec selection(_data_occupied);
@@ -154,8 +156,10 @@ bool QBCLearner::learn_linear(size_t T) {
 			//std::cout << "selection:" << i << "\n" << selection << std::endl;
 		}
 
+		/*
 		coef = arma::zeros(_data_occupied);
 		coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
+		*/
 
 		arma::mat Ksub = K.submat(selection, selection);
 		arma::mat S;
@@ -184,7 +188,7 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		arma::mat pinvA = pinv(A);
 
-		arma::mat coefselection = coef.submat(selection, first_element);
+		//arma::mat coefselection = coef.submat(selection, first_element);
 
 		co1 = arma::pinv(A) * coef.submat(selection, first_element);
 		co2 = hit_and_run(co1, restri, T);

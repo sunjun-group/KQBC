@@ -9,6 +9,10 @@ void Oracle::readCoef(int _dim) {
 		_w[0] = -1;
 		_w[1] = 2;
 		_w[2] = 0;
+
+		_w[0] = -8;
+		_w[1] = 3;
+		_w[2] = 500;
 	} else {
 		//for (int i = 0; i < _dim+1; i++) {
 		_w.zeros(_dim);

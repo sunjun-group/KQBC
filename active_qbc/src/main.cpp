@@ -13,6 +13,7 @@
 int _status = 0;
 int upbound = 100;
 bool TEST = false;
+const int MAXN = 5000000;
 Oracle oracle;
 
 arma::vec activeSampling(arma::vec w1, arma::vec w2) {
@@ -20,14 +21,14 @@ arma::vec activeSampling(arma::vec w1, arma::vec w2) {
 	int n = 0;
 	arma::vec s;
 	size_t size = w1.n_rows;
-	while (++n <= 50000) {
+	while (++n <= MAXN) {
 		arma::vec s = arma::randi<arma::mat> (size, arma::distr_param(0, upbound));
 		s.at(size-1) = 1;
 		if (dot(s, w1) * dot(s, w2) < 0) {
 			return s;
 		}
 	}
-	std::cout << RED << "Tried 50000 times, can not find solutions inside the following matrix: \n" << w1.t() << w2.t() << NORMAL;
+	std::cout << RED << "Tried " << MAXN << " times, can not find solutions inside the following matrix: \n" << w1.t() << w2.t() << NORMAL;
 	_status = 1;
 	return s;
 }
@@ -73,7 +74,7 @@ int main(int argc, char** argv) {
 	   */
 
 	for (int i = 0; i < init_sample_num; i++) {
-		arma::vec s = arma::randi<arma::mat> (dim, arma::distr_param(0, 16));
+		arma::vec s = arma::randi<arma::mat> (dim, arma::distr_param(0, 128));
 		s.at(dim-1) = 1;
 		double y = l.categorizeF(s);
 		l.addVec(s, y);
@@ -87,7 +88,8 @@ int main(int argc, char** argv) {
 	   */
 	l.learn_linear(100);
 	std::cout << l << std::endl;
-	l.convert();
+	l.roundoff();
+	std::cout << l << std::endl;
 	//l.add({2.0, 0.0}, -1.0);
 	//QBCLearner l({"x"});
 	//l.add({1.0}, 1.0);
