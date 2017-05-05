@@ -7,6 +7,8 @@ sudo apt-get install libblas-dev
 sudo apt-get install libboost-dev
 sudo apt-get install libarmadillo-dev
 ```
+	- useful link: [install armadillo](http://www.uio.no/studier/emner/matnat/fys/FYS4411/v13/guides/installing-armadillo/)
+
 - build kqbc
 ```
 mkdir -p build
@@ -18,7 +20,8 @@ make
 - Run
 ```
 cd build
-./qbc 1
+./qbc 1 # test qbc with embeded parameters
+./qbc
 	
 ```
 
