@@ -46,11 +46,35 @@ friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
 			return out;
 		}
 		*/
-		for (size_t i = 0; i < qbc._weight.size(); i++) {
-			std::cout << YELLOW << qbc._weight(i) << BLUE << " * " << qbc._names[i] << NORMAL;
-			if (i < qbc._weight.size() - 1)
-				std::cout << " + ";
+		bool found_not_zero = false;
+		arma::vec w = qbc._weight;
+		if (w[0] != 0) {
+			found_not_zero = true;
+			std::cout << YELLOW << w[0] << NORMAL;
 		}
+			
+		for (size_t i = 1; i < w.size(); i++) {
+			if (w[i] == 0)
+				continue;
+			if (w[i] <= 0) {
+				if (found_not_zero == false) {
+					std::cout << " -";
+				} else {
+					std::cout << " - ";
+				}
+				w[i] = -w[i];
+			} else {
+				if (found_not_zero) {
+					std::cout << " + ";
+				}
+			}
+			if (w[i] != 1) 
+				std::cout << YELLOW << w[i] << BLUE << " * ";
+			std::cout << RED <<  qbc._names[i] << NORMAL;
+			found_not_zero = true;
+		}
+		if (found_not_zero == false)
+			std::cout << YELLOW << "0";
 		std::cout << " >= 0";
 		return out;
 	}

@@ -23,7 +23,7 @@ arma::vec activeSampling(arma::vec w1, arma::vec w2) {
 	size_t size = w1.n_rows;
 	while (++n <= MAXN) {
 		arma::vec s = arma::randi<arma::mat> (size, arma::distr_param(0, upbound));
-		s.at(size-1) = 1;
+		s.at(0) = 1;
 		if (dot(s, w1) * dot(s, w2) < 0) {
 			return s;
 		}
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 	//QBCLearner l({"x", "y", "z"});
 	//l.add({1.0, 1.0, 1.0}, 1.0);
 	//l.add({-1.0, -1.0, -1.0}, -1.0);
-	QBCLearner l({"x1", "x2", "1"});
+	QBCLearner l({"1", "x1", "x2"});
 	l.categorizeF = classify;
 	l.samplingF = activeSampling;
 	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 
 	for (int i = 0; i < init_sample_num; i++) {
 		arma::vec s = arma::randi<arma::mat> (dim, arma::distr_param(0, 128));
-		s.at(dim-1) = 1;
+		s.at(0) = 1;
 		double y = l.categorizeF(s);
 		l.addVec(s, y);
 		//std::cout << __FILE__ << ":" << __LINE__ << "----|//"<< std::endl;

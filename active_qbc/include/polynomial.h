@@ -37,8 +37,6 @@ static bool _roundoffvector(std::vector<double>& v) {
 	return true;
 }
 
-
-
 static bool scale(std::vector<double>& v, double times) {
 	if (times == 0) return false;
 	//std::cout << poly.get_dim() << "--";
@@ -77,8 +75,8 @@ static int ngcd(std::vector<double> v) {
 		if ((int)v[i] - v[i] != 0)
 			return 1;
 	}
-	int coffgcd = std::abs((int)v[0]);
-	for (size_t i = 1; i < v.size() - 1; i++) {
+	int coffgcd = std::abs((int)v[1]);
+	for (size_t i = 2; i < v.size(); i++) {
 		if (coffgcd == 1)
 			break;
 		coffgcd = gcd(coffgcd, std::abs((int)v[i]));
@@ -146,11 +144,11 @@ class Polynomial{
 
 			int poly_gcd = ngcd(ret);
 			if (poly_gcd > 1) {
-				for (int i = 0; i < _dim - 1; i++) {
+				for (int i = 1; i < _dim; i++) {
 					ret[i] = ret[i] / poly_gcd;
 				}
 			}
-			ret[_dim-1] = floor((int)ret[_dim-1] / poly_gcd);
+			ret[0] = floor((int)ret[0] / poly_gcd);
 			//std::cout << "\tAfter roundoff: " << e << NORMAL << std::endl;
 			std::cout << GREEN << "After roundoff: ";
 			printVector(ret);
