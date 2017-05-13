@@ -40,6 +40,7 @@ bool QBCLearner::add(const std::vector<double> &values, const double &y)
 
 bool QBCLearner::addVec(const arma::vec &x, const double &y)
 {
+	//std::cout << "X" << _data;
 	//std::cout << "x:"  << x;
 	//std::cout << "y:"  << y;
 	//std::cout << "YY: \n" << _labels;
@@ -52,7 +53,6 @@ bool QBCLearner::addVec(const arma::vec &x, const double &y)
 	//std::cout << "++ ";
 	_data.row(_data_occupied) = x.t();
 	_labels.at(_data_occupied) = y;
-	//std::cout << "X" << _data;
 	//std::cout << "X: " << _data.n_rows << " * " << _data.n_cols << std::endl;
 	//std::cout << "Y: " << _labels.n_rows << " * " << _labels.n_cols << std::endl;
 

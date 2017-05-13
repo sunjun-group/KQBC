@@ -6,8 +6,8 @@ void Oracle::readCoef(int _dim) {
 	if (TEST) {
 		_dim = 3;
 		_w.zeros(_dim);
-		_w[0] = 0;
-		_w[1] = -1;
+		_w[0] = -3;
+		_w[1] = 0;
 		_w[2] = 2;
 
 		/*
