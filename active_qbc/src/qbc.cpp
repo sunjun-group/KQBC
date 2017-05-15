@@ -147,6 +147,8 @@ bool QBCLearner::learn_linear(size_t T) {
 	double errate;
 		coef = arma::zeros(_data_occupied);
 		coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
+	arma::vec pre_weight;
+
 	for(int iteration = 0; iteration <= MAX_ITERATION; iteration++) {
 		//std::cout << GREEN << BOLD << "################################################################################################## " << iteration << NORMAL << std::endl;
 		std::cout << BLUE << "-------------------------------------------------------------> " << iteration << NORMAL << std::endl;
@@ -254,10 +256,15 @@ bool QBCLearner::learn_linear(size_t T) {
 		errate = arma::sum(preds<=0) / _data_occupied;
 		errors << errate;
 		_weight = _data.t() * coef;
+		if (iteration >= 1) {
+			arma::vec ratio = _weight / pre_weight;
+			std::cout << YELLOW << "Ratio: " << ratio.t() << NORMAL;
+		}
 		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
 		//std::cout << "Step: " << _data_occupied << std::endl;
 		//std::cout << "\nselection:\n" << selection;
 		std::cout << "accuracy: " << (1-errate) * 100 << "%\n"; 
+		pre_weight = _weight;
 	}
 	return false;
 }
