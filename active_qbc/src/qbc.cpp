@@ -146,7 +146,7 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 
 bool QBCLearner::learn_linear(size_t T) {
 
-	int times = 100;
+	int times = 1000;
 
 	_data.resize(_data_occupied, _names.size());
 	_labels.resize(_data_occupied);

@@ -158,11 +158,13 @@ class QBCLearner {
 			return out;
 		}
 
+		/*
 		void _roundoff(arma::vec& v) {
 			Polynomial poly;
 			poly.setValues(v);
 			v = poly.roundoff();
 		}
+		*/
 
 	public:
 		bool learn_linear(size_t T);

@@ -30,19 +30,16 @@ AUX_SOURCE_DIRECTORY(src DIR_SRCS)
 
 #configure_file(config.h.in ../include/config.h)
 include_directories (include)
+#include_directories(.)
 
 include_directories (mistral)
 include_directories (mistral/cnode)
 include_directories (mistral/solver)
 include_directories (mistral/numeric-lib)
 include_directories (mistral/term)
-#include_directories(.)
 
-#find_library(MISTR libmistral.a libparser.a mistral/build mistral/build/parser NO_DEFAULT_PATH)
 find_library(MISTR libmistral.a mistral/build mistral/build/parser NO_DEFAULT_PATH)
 find_library(PARSER libparser.a mistral/build mistral/build/parser NO_DEFAULT_PATH)
-#link_libraries("mistral/build/libmistral.a")
-#link_libraries("mistral/build/parser/libparser.a")
 link_libraries(${MISTR})
 link_libraries(${PARSER})
 
