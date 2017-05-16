@@ -16,6 +16,7 @@ bool TEST = false;
 const int MAXN = 5000000;
 Oracle oracle;
 
+/*
 arma::vec activeSampling(arma::vec w1, arma::vec w2) {
 	//std::cout << YELLOW << ">>>>>>>>>>>>>>>>>" << __FILE__ << ":" << __LINE__ << "-activeSampling-------------------" << NORMAL << std::endl;
 	int n = 0;
@@ -32,6 +33,7 @@ arma::vec activeSampling(arma::vec w1, arma::vec w2) {
 	_status = 1;
 	return s;
 }
+*/
 
 
 double classify(arma::vec s) {
@@ -64,7 +66,7 @@ int main(int argc, char** argv) {
 	//l.add({-1.0, -1.0, -1.0}, -1.0);
 	QBCLearner l({"1", "x1", "x2"});
 	l.categorizeF = classify;
-	l.samplingF = activeSampling;
+	//l.samplingF = activeSampling;
 	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 	/*
 	   l.add({1.0, 1.0}, 1.0);

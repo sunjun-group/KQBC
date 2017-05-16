@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-tl(a,i)=k&tl(b,j)=m&i=j&k>m

@@ -1,3 +1,0 @@
-Type: solve
-Status: UNSAT
-x=y&y=z&!x=z

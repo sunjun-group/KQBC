@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-(i<0 | i>= N) & i=0 & ( ((0<=k & k<N)->k<size) & N>=size) &k>=0

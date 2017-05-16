@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-x1-2x2<=-3&-4x1+6x2<=9&x1+x2<=4&x1>=0&x2>=0

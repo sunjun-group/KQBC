@@ -1,3 +1,0 @@
-Type: solve
-Status: UNSAT
-i+j<=4&i>=2&j>=3

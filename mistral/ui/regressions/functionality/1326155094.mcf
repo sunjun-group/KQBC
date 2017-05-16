@@ -1,3 +1,0 @@
-Type: solve
-Status: UNSAT
-((x<=2)& i0 = 0& -x+3<=0)

@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-f(x,y)=f(y,x)&!f(a,y)=f(y,a)

@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-(w = f(s1, s1)| (!y1 = z2& !y1 = z1)| (!z2 = y2& !z1 = y2))

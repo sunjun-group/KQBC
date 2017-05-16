@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-hd(tl(a,i))=u&hd(tl(a,j))=u&hd(tl(a,k))=v&!u=v

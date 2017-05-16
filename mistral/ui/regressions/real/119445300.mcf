@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-(w = x | (!y2 = z1 & (!y2 = y1|  z1 != y1)))

@@ -222,7 +222,7 @@ bool QBCLearner::learn_linear(size_t T) {
 			}
 		}
 
-		arma::vec xx = samplingF(w1, w2);
+		arma::vec xx = sampling(w1, w2);
 		if (_status != 0) break;
 		double yy = categorizeF(xx); 
 		addVec(xx, yy);

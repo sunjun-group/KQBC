@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-f(a) = f#(b) & a!=b

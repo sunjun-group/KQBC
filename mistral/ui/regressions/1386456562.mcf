@@ -1,3 +1,0 @@
-Type: solve
-Status: SAT
-j+2k=i1 & 0<=i+k & i+k<size & i+k+l=i1 & j+2k+2l!=i1 & l>0

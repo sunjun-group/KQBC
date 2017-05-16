@@ -152,7 +152,7 @@ class Polynomial{
 			//std::cout << "\tAfter roundoff: " << e << NORMAL << std::endl;
 			std::cout << GREEN << "After roundoff: ";
 			printVector(ret);
-			std::cout << std::endl;
+			std::cout << std::endl << NORMAL;
 			return ret;
 		}
 
