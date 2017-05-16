@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 	//QBCLearner l({"x", "y", "z"});
 	//l.add({1.0, 1.0, 1.0}, 1.0);
 	//l.add({-1.0, -1.0, -1.0}, -1.0);
-	QBCLearner l({"1", "x1", "x2"});
+	QBCLearner l({"{1}", "{x_1}", "{x_2}"});
 	l.categorizeF = classify;
 	//l.samplingF = activeSampling;
 	std::cout << __FILE__ << ":" << __LINE__ << std::endl;

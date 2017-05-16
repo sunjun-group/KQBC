@@ -8,8 +8,20 @@
 
 #include "qbc.h"
 
-extern int _status;
-extern int upbound;
+
+bool vec_simplify(arma::vec& v) {
+	int expn = 99999999; 
+	for (size_t ir = 0; ir < v.n_rows; ir++) {
+		if (v[ir] == 0) break;
+		int en = std::log(std::abs(v[ir])) / std::log(10);
+		//std::cout << ir << "-->" << en << std::endl;
+		if (en < expn) 
+			expn = en;
+	}
+	v = v / std::pow(10, expn);
+	return true;
+}
+
 
 bool QBCLearner::increase_problem_size()
 {
@@ -133,6 +145,9 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 
 
 bool QBCLearner::learn_linear(size_t T) {
+
+	int times = 100;
+
 	_data.resize(_data_occupied, _names.size());
 	_labels.resize(_data_occupied);
 
@@ -145,11 +160,12 @@ bool QBCLearner::learn_linear(size_t T) {
 	arma::mat A;
 	arma::vec preds;
 	double errate;
-		coef = arma::zeros(_data_occupied);
-		coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
+	coef = arma::zeros(_data_occupied);
+	coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
 	arma::vec pre_weight;
 
-	for(int iteration = 0; iteration <= MAX_ITERATION; iteration++) {
+	int iteration;
+	for(iteration = 0; iteration <= MAX_ITERATION; iteration++) {
 		//std::cout << GREEN << BOLD << "################################################################################################## " << iteration << NORMAL << std::endl;
 		std::cout << BLUE << "-------------------------------------------------------------> " << iteration << NORMAL << std::endl;
 		arma::uvec selection(_data_occupied);
@@ -160,9 +176,9 @@ bool QBCLearner::learn_linear(size_t T) {
 		}
 
 		/*
-		coef = arma::zeros(_data_occupied);
-		coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
-		*/
+		   coef = arma::zeros(_data_occupied);
+		   coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
+		   */
 
 		arma::mat Ksub = K.submat(selection, selection);
 		arma::mat S;
@@ -222,12 +238,31 @@ bool QBCLearner::learn_linear(size_t T) {
 			}
 		}
 
-		arma::vec xx = sampling(w1, w2);
-		if (_status != 0) break;
+		vec_simplify(w1);
+		vec_simplify(w2);
+		arma::vec xx = sampling(w1*times, w2*times);
+		/*
+		while ((times <= 10000) && (_status!=0)) {
+			times *= 10;
+			xx = sampling(w1*times, w2*times);
+		}
+		if (_status == 0) {
+			times = 10;
+			std::cout << "xx->" << xx.t();
+		} else {
+			break;
+		}
+		*/
+		if (_status != 0)
+			break;
+		//PRINT_LOCATION();
 		double yy = categorizeF(xx); 
+		//PRINT_LOCATION();
 		addVec(xx, yy);
+		//PRINT_LOCATION();
 		K = _data * _data.t();
-	//}
+		//PRINT_LOCATION();
+		//}
 
 		double pred1 = dot(_data.row(_data_occupied-1), w1);
 		//double pred2 = dot(_data.row(_data_occupied-1), w2);
@@ -246,6 +281,7 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		coef.resize(_data_occupied);
 		coef.at(_data_occupied-1) = 0;
+		vec_simplify(coef);
 		//std::cout << BLUE << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL << std::endl;
 		//std::cout << "K:\n" << K; 
 		//std::cout << "coef: \n" << coef.t();
@@ -255,10 +291,14 @@ bool QBCLearner::learn_linear(size_t T) {
 		//std::cout << "preds: " << preds.t() << std::endl;
 		errate = arma::sum(preds<=0) / _data_occupied;
 		errors << errate;
+
+
 		_weight = _data.t() * coef;
+		vec_simplify(_weight);
+
 		if (iteration >= 1) {
 			arma::vec ratio = _weight / pre_weight;
-			std::cout << YELLOW << "Ratio: " << ratio.t() << NORMAL;
+			std::cout << CYAN << "Ratio: " << ratio.t() << NORMAL;
 		}
 		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
 		//std::cout << "Step: " << _data_occupied << std::endl;
@@ -266,5 +306,8 @@ bool QBCLearner::learn_linear(size_t T) {
 		std::cout << "accuracy: " << (1-errate) * 100 << "%\n"; 
 		pre_weight = _weight;
 	}
-	return false;
+
+	if (iteration >= MAX_ITERATION)
+		return false;
+	return true;
 }

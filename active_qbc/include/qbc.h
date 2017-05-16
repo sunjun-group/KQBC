@@ -17,13 +17,16 @@
 #include <string>
 
 #define PRINT_LOCATION() do {\
-		std::cout << RED << "---------------------debug location " << __FILE__ << ":" << __LINE__ << " ----------------------------" << NORMAL << std::endl;\
-	} while(0)
+	std::cout << RED << "---------------------debug location " << __FILE__ << ":" << __LINE__ << " ----------------------------" << NORMAL << std::endl;\
+} while(0)
 
 const double tolerance = 1.0e-10;
-const int MAX_ITERATION = 50;
+const int MAX_ITERATION = 256;
 const size_t qbc_learner_default_problem_size = 1 << 16;
 extern int _status;
+extern int upbound;
+
+bool vec_simplify(arma::vec& v);
 
 class QBCLearner {
 	protected:
@@ -45,59 +48,73 @@ class QBCLearner {
 	private:
 		void setupSolver() {
 			terms.clear();
-			for (size_t i = 0; i < _names.size(); i++) {
+			terms.push_back(VariableTerm::make("ConstantOne"));
+			for (size_t i = 1; i < _names.size(); i++) {
+				//std::cout << "_names[" << i << "] = " << _names[i] << "\n";
 				terms.push_back(VariableTerm::make(_names[i]));
 			}
 		}
 
-		Constraint toConstraint(arma::vec w) {
-			std::cout << ">>>w:" << w.t() << "----->constraint:\n";
+		Constraint toConstraint(arma::vec w, bool b = true) {
+			//std::cout << "convert >>>w: " << w.t() << "-----";
 			map<Term*, long int> map0;
-			PRINT_LOCATION();
-			std::cout << std::flush;
+			//std::cout << std::flush;
 			for (size_t i = 1; i < _names.size(); i++) {
-				map0[terms[i]] = int(w.at(i));
-				PRINT_LOCATION();
+				map0[terms[i]] = (long int)(w.at(i));
+				//std::cout << "-- map0[" << terms[i]->to_string() << ":" << (long int)(w.at(i)) << "]\n";
 			}
 			Term* term0 = ArithmeticTerm::make(map0, w.at(0));
-			PRINT_LOCATION();
-			std::cout << "   - term0" << term0 << std::endl;
-			Constraint c(term0, ConstantTerm::make(0), ATOM_GEQ);
-			std::cout << "   -> constraint:" << c << std::endl;
-			return c;
+			//std::cout << "   - term0:  " << term0->to_string() << std::endl;
+			if (b) {
+				Constraint c(term0, ConstantTerm::make(0), ATOM_GEQ);
+				//std::cout << "-> constraint:  " << c << std::endl;
+				return c;
+			} else {
+				Constraint c(term0, ConstantTerm::make(0), ATOM_LEQ);
+				//std::cout << "-> constraint:  " << c << std::endl;
+				return c;
+			}
 		}
 
-		bool solve(Constraint& c, arma::vec v) {
-			std::cout << "solve" << "----->constraint:" << c << std::endl;
-			if (c.sat() == false)
+		bool solve(Constraint& c, arma::vec& v) {
+			//std::cout << GREEN << "solve constraint:" << c << std::endl << NORMAL;
+			if (c.sat() == false) {
+				std::cout << "not sat!\n";
 				return false;
+			}
+			v.resize(_names.size());
 			map<Term*, SatValue> solution;
 			c.get_assignment(solution);
+			//std::cout << "sat!\n solution:\n";
 			for (auto it = solution.begin(); it != solution.end(); ++it) {
 				for (size_t i = 1; i < _names.size(); i++) {
 					if (it->first == terms.at(i)) {
+						//std::cout << "#######" << terms.at(i)->to_string() << " --> " << it->second.value << std::endl;
 						v.at(i) = it->second.value.to_double();
 						break;
 					}
 				}
 			}
 			v.at(0) = 1;
+			//std::cout << " =>=>=>=>=>=> " << v.t(); 
 			return true;
 		}
 
 	public:
 		arma::vec sampling(arma::vec w1, arma::vec w2) {
-			std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
-			_roundoff(w1);
-			_roundoff(w2);
-			std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
+			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
+			//_roundoff(w1);
+			//_roundoff(w2);
+			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
 			arma::vec s;
 			setupSolver();
-			Constraint c = toConstraint(w1) & toConstraint(w2);
+			Constraint c = toConstraint(w1) & toConstraint(w2, false);
 			if (solve(c, s) == false) {
 				std::cout << "Can not find a solution for constraint: " << c << std::endl;
 				_status = 1;
+				return s;
 			}
+			_status = 0;
 			return s;
 		}
 
@@ -156,5 +173,6 @@ class QBCLearner {
 			_weight = poly.roundoff();
 		}
 };
+
 
 #endif /* __qbclearner__ */
