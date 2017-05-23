@@ -2,6 +2,7 @@
 #define __qbclearner__
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <memory>
 #include <map>
@@ -16,15 +17,14 @@
 #include <map>
 #include <string>
 
-#define PRINT_LOCATION() do {\
-	std::cout << RED << "---------------------debug location " << __FILE__ << ":" << __LINE__ << " ----------------------------" << NORMAL << std::endl;\
-} while(0)
 
 const double tolerance = 1.0e-10;
 const int MAX_ITERATION = 256;
 const size_t qbc_learner_default_problem_size = 1 << 16;
+const int MAXN = 500000;
+//const int MAXN = 999999;
 extern int _status;
-extern int upbound;
+const int upbound = 1000;
 
 bool vec_simplify(arma::vec& v);
 
@@ -70,7 +70,7 @@ class QBCLearner {
 				//std::cout << "-> constraint:  " << c << std::endl;
 				return c;
 			} else {
-				Constraint c(term0, ConstantTerm::make(0), ATOM_LEQ);
+				Constraint c(term0, ConstantTerm::make(0), ATOM_LQ);
 				//std::cout << "-> constraint:  " << c << std::endl;
 				return c;
 			}
@@ -79,7 +79,7 @@ class QBCLearner {
 		bool solve(Constraint& c, arma::vec& v) {
 			//std::cout << GREEN << "solve constraint:" << c << std::endl << NORMAL;
 			if (c.sat() == false) {
-				std::cout << "not sat!\n";
+				//std::cout << "not sat!\n";
 				return false;
 			}
 			v.resize(_names.size());
@@ -101,20 +101,48 @@ class QBCLearner {
 		}
 
 	public:
-		arma::vec sampling(arma::vec w1, arma::vec w2) {
+		arma::vec samplingRandomly(arma::vec w1, arma::vec w2) {
+			arma::vec s;
+			int n = 0;
+			size_t size = w1.n_rows;
+			while (++n <= MAXN) {
+				arma::vec s = arma::randi<arma::mat> (size, arma::distr_param(-upbound-n/100, upbound+n/100));
+				s.at(0) = 1;
+				if (dot(s, w1) * dot(s, w2) < 0) {
+					_status = 0;
+					return s;
+				}
+			}
+
+			_status = 1;
+			return s;
+		}
+
+		arma::vec samplingBySolving(arma::vec w1, arma::vec w2) {
 			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
 			//_roundoff(w1);
 			//_roundoff(w2);
 			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
+			//arma::vec s;
 			arma::vec s;
 			setupSolver();
-			Constraint c = toConstraint(w1) & toConstraint(w2, false);
+			Constraint c1 = toConstraint(w1) & toConstraint(w2, false);
+			Constraint c2 = toConstraint(w1) & toConstraint(w2, false);
+			Constraint c = c1 | c2;
 			if (solve(c, s) == false) {
 				std::cout << "Can not find a solution for constraint: " << c << std::endl;
 				_status = 1;
 				return s;
 			}
 			_status = 0;
+			return s;
+		}
+
+		arma::vec samplingMixed(arma::vec w1, arma::vec w2) {
+			arma::vec s = samplingRandomly(w1, w2);
+			if (_status == 0)
+				return s;
+			s = samplingBySolving(w1, w2);
 			return s;
 		}
 
@@ -125,8 +153,13 @@ class QBCLearner {
 		void clear();
 
 		friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
+			out << std::setprecision(16);
 			bool found_not_zero = false;
 			arma::vec w = qbc._weight;
+			arma::vec ratio_w = w / w[1]; 
+			std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+			std::cout << "R-Learn: " << ratio_w.t();
+			std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n" << NORMAL;
 			if (w[0] != 0) {
 				found_not_zero = true;
 				std::cout << YELLOW << w[0] << NORMAL;
@@ -159,12 +192,12 @@ class QBCLearner {
 		}
 
 		/*
-		void _roundoff(arma::vec& v) {
-			Polynomial poly;
-			poly.setValues(v);
-			v = poly.roundoff();
-		}
-		*/
+		   void _roundoff(arma::vec& v) {
+		   Polynomial poly;
+		   poly.setValues(v);
+		   v = poly.roundoff();
+		   }
+		   */
 
 	public:
 		bool learn_linear(size_t T);

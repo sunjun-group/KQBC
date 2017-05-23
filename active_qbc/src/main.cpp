@@ -11,9 +11,7 @@
 //#include <random>
 
 int _status = 0;
-int upbound = 100;
 bool TEST = false;
-const int MAXN = 5000000;
 Oracle oracle;
 
 /*
@@ -44,30 +42,44 @@ double classify(arma::vec s) {
 int main(int argc, char** argv) {
 	if (argc > 1)
 		TEST = true;
+	std::cout << std::setprecision(16);
 	arma::arma_rng::set_seed_random();
 	std::cout.precision(16);
+	srand(time(0));
 	//std::cout.setf(std::ios::fixed);
 	//std::cout << std::fixed;
 
-	int dim = 3;
-	int init_sample_num = 8;
 
+	int dim = 0;
 	srand(time(NULL));
 	if (!TEST) {
 		std::cout << "dimension:? ";
 		std::cin >> dim;
 	}
-	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+
+	//std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 	//Oracle oracle;
+	PRINT_LOCATION();
 	oracle.readCoef(dim);
+
+	//int dim = 3;
+	dim = oracle._dim;
+	std::cout << "main>>dim=" << dim << std::endl;
+	int init_sample_num = 16;
 	//oracle.output();
 	//QBCLearner l({"x", "y", "z"});
 	//l.add({1.0, 1.0, 1.0}, 1.0);
 	//l.add({-1.0, -1.0, -1.0}, -1.0);
-	QBCLearner l({"{1}", "{x_1}", "{x_2}"});
+	std::vector<string> vs;
+	vs.push_back("{1}");
+	for (int i = 1; i < dim; i++)
+		vs.push_back("{x_" + to_string(i) + "}");
+	//QBCLearner l({"{1}", "{x_1}", "{x_2}"});
+	QBCLearner l(vs);
+	PRINT_LOCATION();
 	l.categorizeF = classify;
 	//l.samplingF = activeSampling;
-	std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+	//std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 	/*
 	   l.add({1.0, 1.0}, 1.0);
 	   l.add({1.0, 0.0}, 1.0);
@@ -75,6 +87,7 @@ int main(int argc, char** argv) {
 	   l.add({-1.0, 1.0}, -1.0);
 	   */
 
+	PRINT_LOCATION();
 	for (int i = 0; i < init_sample_num; i++) {
 		arma::vec s = arma::randi<arma::mat> (dim, arma::distr_param(0, 128));
 		s.at(0) = 1;
@@ -88,10 +101,16 @@ int main(int argc, char** argv) {
 	   l.add({3.0, -3.0}, -1.0);
 	   l.add({-4.0, 4.0}, -1.0);
 	   */
+	//PRINT_LOCATION();
 	l.learn_linear(100);
 	std::cout << l << std::endl;
 	l.roundoff();
+	//PRINT_LOCATION();
 	std::cout << l << std::endl;
+	std::cout << "----------oracle---------\n" << oracle._w.t();
+	oracle._w = oracle._w / oracle._w[1];
+	std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\nR-Oracle:" 
+		<< oracle._w.t() << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"; 
 	//l.add({2.0, 0.0}, -1.0);
 	//QBCLearner l({"x"});
 	//l.add({1.0}, 1.0);

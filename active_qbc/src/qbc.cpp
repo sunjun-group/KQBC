@@ -8,7 +8,6 @@
 
 #include "qbc.h"
 
-
 bool vec_simplify(arma::vec& v) {
 	int expn = 99999999; 
 	for (size_t ir = 0; ir < v.n_rows; ir++) {
@@ -146,7 +145,7 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 
 bool QBCLearner::learn_linear(size_t T) {
 
-	int times = 1000;
+	int times = 100;
 
 	_data.resize(_data_occupied, _names.size());
 	_labels.resize(_data_occupied);
@@ -163,6 +162,8 @@ bool QBCLearner::learn_linear(size_t T) {
 	coef = arma::zeros(_data_occupied);
 	coef.at(0) = _labels.at(0)/sqrt(K.at(0, 0));
 	arma::vec pre_weight;
+
+	Polynomial poly, pre_poly;
 
 	int iteration;
 	for(iteration = 0; iteration <= MAX_ITERATION; iteration++) {
@@ -240,21 +241,26 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		vec_simplify(w1);
 		vec_simplify(w2);
-		arma::vec xx = sampling(w1*times, w2*times);
-		/*
+		//*
+		arma::vec xx = samplingR(w1, w2);
+		if (_status != 0) {
+			//break;
+		//*/
+		//*
+		xx = samplingS(w1*times, w2*times);
+		//arma::vec xx = samplingS(w1*times, w2*times);
 		while ((times <= 10000) && (_status!=0)) {
 			times *= 10;
-			xx = sampling(w1*times, w2*times);
+			xx = samplingS(w1*times, w2*times);
 		}
 		if (_status == 0) {
-			times = 10;
+			times = 100;
 			std::cout << "xx->" << xx.t();
 		} else {
 			break;
 		}
-		*/
-		if (_status != 0)
-			break;
+		}
+		//	*/
 		//PRINT_LOCATION();
 		double yy = categorizeF(xx); 
 		//PRINT_LOCATION();
@@ -297,13 +303,21 @@ bool QBCLearner::learn_linear(size_t T) {
 		vec_simplify(_weight);
 
 		if (iteration >= 1) {
+			pre_poly = poly;
 			arma::vec ratio = _weight / pre_weight;
 			std::cout << CYAN << "Ratio: " << ratio.t() << NORMAL;
 		}
+		
 		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
+		poly.setValues(_weight);
+		if (poly.isSimilar(pre_poly)) {
+			std::cout << "converged.\n";
+			break;
+		}
 		//std::cout << "Step: " << _data_occupied << std::endl;
 		//std::cout << "\nselection:\n" << selection;
-		std::cout << "accuracy: " << (1-errate) * 100 << "%\n"; 
+		if (errate > 0)
+			std::cout << "accuracy: " << (1-errate) * 100 << "%\n"; 
 		pre_weight = _weight;
 	}
 

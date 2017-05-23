@@ -23,8 +23,8 @@ class Oracle {
 		}
 		*/
 
-	private:
-		int _dim;
 		arma::vec _w;
+		int _dim;
+	private:
 };
 #endif

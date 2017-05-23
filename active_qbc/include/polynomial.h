@@ -156,6 +156,66 @@ class Polynomial{
 			return ret;
 		}
 
+		bool isSimilar(Polynomial& e2, int m_precision = 2) {
+			return false;
+			double ratio = 0;
+			int i;
+			double max1 = std::abs(_values[0]), max2 = std::abs(e2._values[0]);
+			for (i = 0; i < _dim; i++) {
+				if (max1 < std::abs(_values[i])) max1 = std::abs(_values[i]); 
+				if (max2 < std::abs(e2._values[i])) max1 = std::abs(e2._values[i]); 
+			}
+
+			//-----------------------------------------------------------------------------------
+			//std::cout << YELLOW << *this << RED << " VVVSSS " << YELLOW << e2 << std::endl << CYAN;
+			/*
+			std::cout << CYAN << "Ratio: ";
+			for (i = 0; i < _dim; i++) {
+				if ((_values[i] != 0) && (e2._values[i] != 0)) {
+					ratio = e2._values[i] / _values[i];
+					std::cout << "[" << i << "]:" << ratio << "  ";
+				} else {
+					std::cout << "[" << i << "]:nan  ";
+				}
+			}
+			std::cout << std::endl << NORMAL;
+			*/
+			//-----------------------------------------------------------------------------------
+
+			for (i = 0; i < _dim; i++) {
+				if ((_values[i] != 0) && (e2._values[i] != 0)) {
+					ratio = _values[i] / e2._values[i];
+					break;
+				}
+			}
+			if (i >= _dim)
+				return -1;
+			//std::cout << "1[ratio=" << ratio <<"]\n";
+			double down, up;
+			if (ratio >= 0) {
+				down = ratio * (1 - pow(0.1, m_precision));
+				up = ratio * (1 + pow(0.1, m_precision));
+			}
+			else {
+				up = ratio * (1 - pow(0.1, m_precision));
+				down = ratio * (1 + pow(0.1, m_precision));
+			}
+			//std::cout << "[" << down << ", " << ratio << ", " << up << "]";
+			for (int i = 0; i < _dim; i++) {
+				if (std::abs(_values[i]) / max1 <= std::pow(0.01, m_precision)) continue;
+				if (std::abs(e2._values[i]) / max2 <= std::pow(0.01, m_precision)) continue; 
+				if (e2._values[i] >= 0) {
+					if ((_values[i] < e2._values[i] * down) || (_values[i] > e2._values[i] * up))
+						return false;
+				}
+				else {
+					if ((_values[i] < e2._values[i] * up) || (_values[i] > e2._values[i] * down))
+						return false;
+				}
+			}
+			return true;
+		}
+
 	private:
 		int _dim;
 		std::vector<double> _values;
