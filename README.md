@@ -1,23 +1,30 @@
-# KQBC
-Python implementation for KQBC
+# build kqbc c++ version
 
-## Linear learning
-* Converge with 1000 inputs
+- install armadillo first!.
+```
+sudo apt-get install liblapack-dev
+sudo apt-get install libblas-dev
+sudo apt-get install libboost-dev
+sudo apt-get install libarmadillo-dev
+```
+	- useful link: [install armadillo](http://www.uio.no/studier/emner/matnat/fys/FYS4411/v13/guides/installing-armadillo/)
 
+- build kqbc
+```
+mkdir -p build
+cd build
+cmake ..
+make
+```
 
-## build
-include with right path, and the -Wl,-rpath.
+- Run
+```
+cd build
+./qbc 1 # test qbc with embeded parameters
+./qbc
+	
+```
 
-### ubuntu
-[//]: # (g++ qbc.cpp -o qbc -I/usr/local/MATLAB/R2016b/extern/include -leng -lmat -lmx -lmex -lut -L/usr/local/MATLAB/R2016b/bin/glnxa64 -Wl,-rpath=/usr/local/MATLAB/R2016b/bin/glnxa64)
-- g++ qbc.cpp -o qbc -I/usr/local/MATLAB/R2016b/extern/include -leng -lmx -L/usr/local/MATLAB/R2016b/bin/glnxa64 -Wl,-rpath=/usr/local/MATLAB/R2016b/bin/glnxa64
-
-### mac
-[//]: # (export MatlabRoot="/Applications/MATLAB_R2016a.app")
-[//]: # (export PATH=$MatlabRoot/bin:$PATH)
-[//]: # (export DYLD_LIBRARY_PATH=$MatlabRoot/bin/maci64:$MatlabRoot/sys/os/maci64:$DYLD_LIBRARY_PATH)
-[//]: # (g++ qbc.cpp -o qbc -I$MatlabRoot/extern/include/ -L$MatlabRoot/bin/maci64 -leng -lmx)
-
-- export PATH=/Applications/MATLAB_R2016a.app/bin:$PATH
-- export DYLD_LIBRARY_PATH=/Applications/MATLAB_R2016a.app/bin/maci64:/Applications/MATLAB_R2016a.app/sys/os/maci64:$DYLD_LIBRARY_PATH
-- g++ qbc.cpp -o qbc -I/Applications/MATLAB_R2016a.app/extern/include/ -L/Applications/MATLAB_R2016a.app/bin/maci64 -leng -lmx
+-------------------------------------------------------------
+- compile kqbc with following commands: (do not use anymore)
+    - g++ qbc.cpp -o qbc -larmadillo -std=c++11
