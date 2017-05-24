@@ -1,18 +1,17 @@
- 
  #include <iostream>
  #include "CNode.h"
  #include "Constraint.h"
  #include "term.h"
 
+ using namespace std;
+ #include <string>
+ #include <map>
  
  /*
  * Compile as: g++ -I.. -I../cnode -I../solver -I../numeric-lib -I../term/ -std=c++0x example.cpp ../build/libmistral.a ../build/parser/libparser.a -o exmp -lgmp
  * The, run ./my_project
  */
  
- using namespace std;
- #include <string>
- #include <map>
  int main(int c, char** argv)
  {
    

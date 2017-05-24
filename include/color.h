@@ -19,8 +19,4 @@
 #define BOLD "\e[1m"
 #define UNDERLINE "\e[4m"
 
-#define PRINT_LOCATION() do {\
-	std::cout << RED << "---------------------debug location " << __FILE__ << ":" << __LINE__ << " ----------------------------" << NORMAL << std::endl;\
-} while(0)
-
 #endif

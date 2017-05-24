@@ -16,6 +16,7 @@ file(GLOB PARSER_SRC "mistral-parser.cpp")
 
 add_library(parser ${FLEX_MistralLexer_OUTPUTS}  ${BISON_MistralParser_OUTPUTS} ${PARSER_SRC})
 
+install(TARGETS parser ARCHIVE DESTINATION lib/mistral)
 #add_executable(Foo
 #  ${FLEX_MistralLexer_OUTPUTS}
 #  ${BISON_MistralParser_OUTPUTS}

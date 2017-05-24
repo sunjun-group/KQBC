@@ -9,7 +9,7 @@
 #include <cmath>
 #include <armadillo>
 #include "color.h"
-#include "polynomial.h"
+#include <nk/polynomial.h>
 
 #include "CNode.h"
 #include "Constraint.h"
@@ -70,7 +70,7 @@ class QBCLearner {
 				//std::cout << "-> constraint:  " << c << std::endl;
 				return c;
 			} else {
-				Constraint c(term0, ConstantTerm::make(0), ATOM_LQ);
+				Constraint c(term0, ConstantTerm::make(0), ATOM_LT);
 				//std::cout << "-> constraint:  " << c << std::endl;
 				return c;
 			}
@@ -204,8 +204,18 @@ class QBCLearner {
 		arma::vec hit_and_run(arma::vec xpoint, arma::mat constraintMat, size_t T);
 		void roundoff() {
 			Polynomial poly;
-			poly.setValues(_weight);
-			_weight = poly.roundoff();
+			for (size_t i = 0; i < _weight.n_elem; i++)
+				poly.set_coef(i, _weight.at(i));
+			/*
+			poly.set_coefs(_weight, _weight.n_elem, 
+					[](arma::vec& x, int t) {
+						return (double)x.at(t);
+					}
+					);
+					*/
+			poly.roundoff_in_place();
+			for (size_t i = 0; i < _weight.n_elem; i++)
+				_weight.at(i) = poly.get_coef(i);
 		}
 };
 

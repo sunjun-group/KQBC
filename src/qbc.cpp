@@ -242,16 +242,16 @@ bool QBCLearner::learn_linear(size_t T) {
 		vec_simplify(w1);
 		vec_simplify(w2);
 		//*
-		arma::vec xx = samplingR(w1, w2);
+		arma::vec xx = samplingRandomly(w1, w2);
 		if (_status != 0) {
 			//break;
 		//*/
 		//*
-		xx = samplingS(w1*times, w2*times);
+		xx = samplingBySolving(w1*times, w2*times);
 		//arma::vec xx = samplingS(w1*times, w2*times);
 		while ((times <= 10000) && (_status!=0)) {
 			times *= 10;
-			xx = samplingS(w1*times, w2*times);
+			xx = samplingBySolving(w1*times, w2*times);
 		}
 		if (_status == 0) {
 			times = 100;
@@ -261,13 +261,14 @@ bool QBCLearner::learn_linear(size_t T) {
 		}
 		}
 		//	*/
-		//PRINT_LOCATION();
+		//dbg_print();
 		double yy = categorizeF(xx); 
-		//PRINT_LOCATION();
+		//dbg_print();
 		addVec(xx, yy);
-		//PRINT_LOCATION();
+		//dbg_print();
 		K = _data * _data.t();
-		//PRINT_LOCATION();
+		//dbg_print();
+
 		//}
 
 		double pred1 = dot(_data.row(_data_occupied-1), w1);
@@ -278,6 +279,7 @@ bool QBCLearner::learn_linear(size_t T) {
 		//std::cout << "data:\n" << _data; 
 		//std::cout << "lables:\n" << _labels.t(); 
 		//std::cout << "_data_occupied:" << _data_occupied << std::endl; 
+		dbg_print();
 		if (_labels.at(_data_occupied-1) * pred1 >= 0) {
 			coef = A * co1;
 		} else {
@@ -285,6 +287,7 @@ bool QBCLearner::learn_linear(size_t T) {
 		}
 		//std::cout << BLUE << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL << std::endl;
 
+		dbg_print();
 		coef.resize(_data_occupied);
 		coef.at(_data_occupied-1) = 0;
 		vec_simplify(coef);
@@ -299,21 +302,29 @@ bool QBCLearner::learn_linear(size_t T) {
 		errors << errate;
 
 
+		dbg_print();
 		_weight = _data.t() * coef;
 		vec_simplify(_weight);
 
+		dbg_print();
 		if (iteration >= 1) {
 			pre_poly = poly;
 			arma::vec ratio = _weight / pre_weight;
 			std::cout << CYAN << "Ratio: " << ratio.t() << NORMAL;
 		}
 		
+		dbg_print();
 		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
-		poly.setValues(_weight);
-		if (poly.isSimilar(pre_poly)) {
+		dbg_print();
+		//poly.setValues(_weight);
+		for (size_t k = 0; k < _weight.n_elem; k++)
+			poly.set_coef(k, _weight.at(k));
+		dbg_print();
+		if (poly.is_similar(pre_poly)) {
 			std::cout << "converged.\n";
 			break;
 		}
+		dbg_print();
 		//std::cout << "Step: " << _data_occupied << std::endl;
 		//std::cout << "\nselection:\n" << selection;
 		if (errate > 0)

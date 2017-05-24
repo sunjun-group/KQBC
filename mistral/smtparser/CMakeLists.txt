@@ -16,3 +16,4 @@ file(GLOB PARSER_SRC "smt-parser.cpp")
 
 add_library(smtparser ${FLEX_SMTLexer_OUTPUTS}  ${BISON_SMTParser_OUTPUTS} ${PARSER_SRC})
 
+install(TARGETS smtparser ARCHIVE DESTINATION lib/mistral)
