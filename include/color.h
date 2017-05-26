@@ -1,5 +1,6 @@
-#ifndef __color__
-#define __color__
+#ifndef __COLOR_H__
+#define __COLOR_H__
+
 #define RED "\e[31m"
 #define GREEN "\e[32m"
 #define YELLOW "\e[33m"

@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
 	//std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 	//Oracle oracle;
-	dbg_print();
+	//dbg_print();
 	oracle.readCoef(dim);
 
 	//int dim = 3;
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 		vs.push_back("{x_" + to_string(i) + "}");
 	//QBCLearner l({"{1}", "{x_1}", "{x_2}"});
 	QBCLearner l(vs);
-	dbg_print();
+	//dbg_print();
 	l.categorizeF = classify;
 	//l.samplingF = activeSampling;
 	//std::cout << __FILE__ << ":" << __LINE__ << std::endl;
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 	   l.add({-1.0, 1.0}, -1.0);
 	   */
 
-	dbg_print();
+	//dbg_print();
 	for (int i = 0; i < init_sample_num; i++) {
 		arma::vec s = arma::randi<arma::mat> (dim, arma::distr_param(0, 128));
 		s.at(0) = 1;
@@ -101,11 +101,12 @@ int main(int argc, char** argv) {
 	   l.add({3.0, -3.0}, -1.0);
 	   l.add({-4.0, 4.0}, -1.0);
 	   */
-	//dbg_print();
+	dbg_print();
 	l.learn_linear(100);
 	std::cout << l << std::endl;
+	dbg_print();
 	l.roundoff();
-	//dbg_print();
+	dbg_print();
 	std::cout << l << std::endl;
 	std::cout << "----------oracle---------\n" << oracle._w.t();
 	oracle._w = oracle._w / oracle._w[1];

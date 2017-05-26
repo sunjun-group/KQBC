@@ -241,33 +241,53 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		vec_simplify(w1);
 		vec_simplify(w2);
+		cout << "w1:" << w1.t();
+		cout << "w2:" << w2.t();
+
+		/*
+		dbg_print();
+		z3::context cont;
+		Polynomial p1(w1), p2(w2);
+		cout << "p1: " << p1.to_string() << endl;
+		z3::expr expr1 = p1.to_z3_expr(cont);
+		cout << "p2: " << p2.to_string() << endl;
+		z3::expr expr2 = p2.to_z3_expr(cont);
+		dbg_print();
+		*/
 		//*
+#ifdef _RAND_
+		arma::vec xx = samplingRandomly(w1, w2);
+#endif
+#ifdef _Z3_
+		arma::vec xx = samplingByZ3(w1, w2);
+#endif
+#ifdef _MISTRAL_
 		arma::vec xx = samplingRandomly(w1, w2);
 		if (_status != 0) {
-			//break;
-		//*/
-		//*
-		xx = samplingBySolving(w1*times, w2*times);
-		//arma::vec xx = samplingS(w1*times, w2*times);
-		while ((times <= 10000) && (_status!=0)) {
-			times *= 10;
-			xx = samplingBySolving(w1*times, w2*times);
+			//*
+			xx = samplingByMistral(w1*times, w2*times);
+			//arma::vec xx = samplingS(w1*times, w2*times);
+			while ((times <= 10000) && (_status!=0)) {
+				times *= 10;
+				xx = samplingByMistral(w1*times, w2*times);
+			}
+			if (_status == 0) {
+				times = 100;
+				std::cout << "xx->" << xx.t();
+			} 
 		}
-		if (_status == 0) {
-			times = 100;
-			std::cout << "xx->" << xx.t();
-		} else {
+#endif
+		if (_status != 0) {
 			break;
 		}
-		}
+
+		cout << "  w1(xx) = " << dot(w1, xx) << endl;
+		cout << "  w2(xx) = " << dot(w2, xx) << endl;
+
 		//	*/
-		//dbg_print();
 		double yy = categorizeF(xx); 
-		//dbg_print();
 		addVec(xx, yy);
-		//dbg_print();
 		K = _data * _data.t();
-		//dbg_print();
 
 		//}
 
@@ -287,7 +307,6 @@ bool QBCLearner::learn_linear(size_t T) {
 		}
 		//std::cout << BLUE << "-----------------" << __FILE__ << ":" << __LINE__ << "--------------------" << NORMAL << std::endl;
 
-		dbg_print();
 		coef.resize(_data_occupied);
 		coef.at(_data_occupied-1) = 0;
 		vec_simplify(coef);
@@ -301,30 +320,29 @@ bool QBCLearner::learn_linear(size_t T) {
 		errate = arma::sum(preds<=0) / _data_occupied;
 		errors << errate;
 
-
-		dbg_print();
 		_weight = _data.t() * coef;
 		vec_simplify(_weight);
 
-		dbg_print();
 		if (iteration >= 1) {
 			pre_poly = poly;
 			arma::vec ratio = _weight / pre_weight;
 			std::cout << CYAN << "Ratio: " << ratio.t() << NORMAL;
 		}
-		
-		dbg_print();
+
+		//dbg_print();
 		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
-		dbg_print();
+		//dbg_print();
 		//poly.setValues(_weight);
 		for (size_t k = 0; k < _weight.n_elem; k++)
 			poly.set_coef(k, _weight.at(k));
-		dbg_print();
-		if (poly.is_similar(pre_poly)) {
-			std::cout << "converged.\n";
-			break;
+		//dbg_print();
+		if (iteration >= 1) {
+			if (poly.is_similar(pre_poly)) {
+				std::cout << YELLOW << "converged.\n" << NORMAL;
+				break;
+			}
 		}
-		dbg_print();
+		//dbg_print();
 		//std::cout << "Step: " << _data_occupied << std::endl;
 		//std::cout << "\nselection:\n" << selection;
 		if (errate > 0)
@@ -332,7 +350,9 @@ bool QBCLearner::learn_linear(size_t T) {
 		pre_weight = _weight;
 	}
 
+	dbg_print();
 	if (iteration >= MAX_ITERATION)
 		return false;
+	dbg_print();
 	return true;
 }

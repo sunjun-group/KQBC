@@ -9,7 +9,8 @@
 #include <cmath>
 #include <armadillo>
 #include "color.h"
-#include <nk/polynomial.h>
+//#include <nk/polynomial.h>
+#include "polynomial.h"
 
 #include "CNode.h"
 #include "Constraint.h"
@@ -36,6 +37,9 @@ class QBCLearner {
 		arma::vec _labels;
 		arma::vec _weight;
 		std::vector<Term*> terms;
+		std::vector<z3::expr> x;
+		z3::context c;
+		int bound;
 
 	public:
 		QBCLearner(const std::vector<std::string> &names) : _names(names)
@@ -46,7 +50,7 @@ class QBCLearner {
 		bool increase_problem_size();
 
 	private:
-		void setupSolver() {
+		void setupMistral() {
 			terms.clear();
 			terms.push_back(VariableTerm::make("ConstantOne"));
 			for (size_t i = 1; i < _names.size(); i++) {
@@ -55,7 +59,7 @@ class QBCLearner {
 			}
 		}
 
-		Constraint toConstraint(arma::vec w, bool b = true) {
+		Constraint toMistralConstraint(arma::vec w, bool b = true) {
 			//std::cout << "convert >>>w: " << w.t() << "-----";
 			map<Term*, long int> map0;
 			//std::cout << std::flush;
@@ -76,7 +80,7 @@ class QBCLearner {
 			}
 		}
 
-		bool solve(Constraint& c, arma::vec& v) {
+		bool mistralSolve(Constraint& c, arma::vec& v) {
 			//std::cout << GREEN << "solve constraint:" << c << std::endl << NORMAL;
 			if (c.sat() == false) {
 				//std::cout << "not sat!\n";
@@ -118,18 +122,17 @@ class QBCLearner {
 			return s;
 		}
 
-		arma::vec samplingBySolving(arma::vec w1, arma::vec w2) {
+		arma::vec samplingByMistral(arma::vec w1, arma::vec w2) {
 			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
 			//_roundoff(w1);
 			//_roundoff(w2);
 			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
-			//arma::vec s;
 			arma::vec s;
-			setupSolver();
-			Constraint c1 = toConstraint(w1) & toConstraint(w2, false);
-			Constraint c2 = toConstraint(w1) & toConstraint(w2, false);
+			setupMistral();
+			Constraint c1 = toMistralConstraint(w1) & toMistralConstraint(w2, false);
+			Constraint c2 = toMistralConstraint(w2) & toMistralConstraint(w1, false);
 			Constraint c = c1 | c2;
-			if (solve(c, s) == false) {
+			if (mistralSolve(c, s) == false) {
 				std::cout << "Can not find a solution for constraint: " << c << std::endl;
 				_status = 1;
 				return s;
@@ -138,11 +141,115 @@ class QBCLearner {
 			return s;
 		}
 
+
+	private:
+		vector<expr> setupZ3() {
+			for (size_t i = 0; i < _names.size(); i++) {
+				x.push_back(c.int_const(_names[i].c_str()));
+			}
+			return x;
+		}
+
+		z3::expr toZ3Constraint(arma::vec w, bool b = true) {
+			//cout << RED << "to z3 constraint: " << w.t() << NORMAL;
+			std::vector<z3::expr> v;
+			char real[65];
+			for (size_t i = 0; i < _names.size(); i++) {
+				snprintf(real, 64, "%2.12f", w[i]);
+				v.push_back(c.real_val(real));
+				//cout << ">>" << v[i];
+			}
+			//cout << endl;
+
+			z3::expr expr0 = v[0];
+			for (size_t i = 1; i < _names.size(); i++) {
+				z3::expr tmp = v[i];
+				tmp = tmp * x[i];
+				expr0 = expr0 + tmp;
+			}
+
+			z3::expr hypo = expr0 >= 0;
+			if (!b)
+				hypo = !hypo;
+			for (size_t i = 1; i < _names.size(); i++) {
+				hypo = hypo && (x[i] >= -bound) && (x[i]<= bound);
+			}
+			//cout << "--->z3: " << hypo << endl;
+			return hypo;
+		}
+
+		bool z3Solve(z3::expr& e, arma::vec& v) {
+			//cout << BLUE << "CONSTRAINT: " << e << endl;
+			z3::solver s(c);
+			s.add(e);
+			//dbg_print();
+			v.resize(_names.size());
+			v.at(0) = 1;
+
+			if (s.check() == unsat) {
+				cout << "UNSAT\n";
+				return false;
+			} else {
+				cout << "SAT\n";
+				dbg_print();
+				model m = s.get_model();
+				for (size_t i = 1; i < _names.size(); i++) {
+					expr val = m.eval(x[i]);
+					int tmp;
+					if (Z3_get_numeral_int(c, val, &tmp) == Z3_TRUE)
+						v.at(i) = tmp;
+					else 
+						return false;
+					cout << "..." << _names[i] << "**" << x[i] << "**"<< ": " << val << " #### " << tmp << endl;
+				}
+				return true;
+			}
+		}
+
+	public:
+		arma::vec samplingByZ3(arma::vec w1, arma::vec w2) {
+			/*config cfg;
+			  cfg.set("auto_config", true);
+			  context c(cfg);
+			  */
+			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
+			bound = 100;
+			arma::vec s;
+			vector<z3::expr> x = setupZ3();
+			while (bound <= 100000) {
+				cout << "Try to solve polynomial within [" << -bound << ", " << bound << "] -- ";
+				z3::expr c1 = toZ3Constraint(w1) && toZ3Constraint(w2, false);
+				z3::expr c2 = toZ3Constraint(w2) && toZ3Constraint(w1, false);
+				//z3::expr cc = c1  c2;
+				z3::expr cc = c1 || c2;
+				if (z3Solve(cc, s) == false) {
+					//cout << "can not find solutions for bound=" << bound << ". Try again..." << endl;
+					bound *= 10;
+					continue;
+				} else {
+					break;
+				}
+			}
+			if (bound > 100000) {
+				std::cout << "Can not find a solution for the constraint." << std::endl;
+				_status = 1;
+				return s;
+			}
+			cout << YELLOW << "-'-'-'-'-" << s.t() << NORMAL;
+			_status = 0;
+			return s;
+		}
+
 		arma::vec samplingMixed(arma::vec w1, arma::vec w2) {
 			arma::vec s = samplingRandomly(w1, w2);
 			if (_status == 0)
 				return s;
-			s = samplingBySolving(w1, w2);
+#ifdef _MISTRAL_
+			s = samplingByMistral(w1, w2);
+#endif
+#ifdef _Z3_
+			s = samplingByMistral(w1, w2);
+#endif
 			return s;
 		}
 
@@ -203,16 +310,14 @@ class QBCLearner {
 		bool learn_linear(size_t T);
 		arma::vec hit_and_run(arma::vec xpoint, arma::mat constraintMat, size_t T);
 		void roundoff() {
-			Polynomial poly;
-			for (size_t i = 0; i < _weight.n_elem; i++)
-				poly.set_coef(i, _weight.at(i));
+			Polynomial poly(_weight);
 			/*
-			poly.set_coefs(_weight, _weight.n_elem, 
-					[](arma::vec& x, int t) {
-						return (double)x.at(t);
-					}
-					);
-					*/
+			   poly.set_coefs(_weight, _weight.n_elem, 
+			   [](arma::vec& x, int t) {
+			   return (double)x.at(t);
+			   }
+			   );
+			   */
 			poly.roundoff_in_place();
 			for (size_t i = 0; i < _weight.n_elem; i++)
 				_weight.at(i) = poly.get_coef(i);
