@@ -69,7 +69,11 @@ bool QBCLearner::addVec(const arma::vec &x, const double &y)
 
 	if (y > 0) std::cout << GREEN;
 	else std::cout << RED;
-	std::cout << "@" << _data_occupied << "++" << x.t() << NORMAL; 
+	//std::cout << "@" << _data_occupied << "++" << x.t() << NORMAL; 
+	std::cout << "@" << _data_occupied << "++  " << BOLD;
+	for (size_t i = 1; i < x.n_elem; i++)
+		std::cout << (int)x.at(i) << "  "; 
+	std::cout << NORMAL << std::endl;
 	//std::cout << "YY: \n" << _labels;
 
 	++_data_occupied;
@@ -258,8 +262,9 @@ hit_run_again:
 		*/
 		cout << "last_learn: " << pre_weight.t();
 		Polynomial p1(w1), p2(w2);
-		cout << " *p1: " << p1.to_string() << endl;
-		cout << " *p2: " << p2.to_string() << endl;
+		//cout << " *p1: " << p1.to_string() << endl;
+		//cout << " *p2: " << p2.to_string() << endl;
+		/*
 		if (p1.is_similar(p2)) {
 			cout << BOLD << GREEN << "w1 ~= w2. for " << n_hit_run << " times"<< endl << NORMAL;
 			n_hit_run ++;
@@ -274,10 +279,6 @@ hit_run_again:
 				goto hit_run_again;
 			}
 		}
-		/*
-		z3::expr expr1 = p1.to_z3_expr(cont);
-		z3::expr expr2 = p2.to_z3_expr(cont);
-		dbg_print();
 		*/
 		//*
 		arma::vec xx = samplingMixed(w1, w2);
@@ -316,8 +317,23 @@ hit_run_again:
 #ifdef _LOG_
 		of << iteration + 1 << ": " << xx.t();
 #endif
-		cout << "  w1(xx) = " << dot(w1, xx) << endl;
-		cout << "  w2(xx) = " << dot(w2, xx) << endl;
+#ifdef _DBG_
+		double w1xx = dot(w1, xx);
+		double w2xx = dot(w2, xx);
+#if 0
+		cout << "  w1(xx) = " << w1xx << endl;
+		cout << "  w2(xx) = " << w2xx << endl;
+#endif
+		if (w1xx * w2xx > 0) {
+			cerr << "Fatal error! w1(xx) * w2(xx) > 0.\n";
+			cout << "w1: " << w1.t() << endl;
+			cout << "w2: " << w2.t() << endl;
+			cout << "xx: " << xx.t() << endl;
+			cout << "  w1(xx) = " << w1xx << endl;
+			cout << "  w2(xx) = " << w2xx << endl;
+			exit(1);
+		}
+#endif
 
 		K = _data * _data.t();
 
@@ -331,7 +347,7 @@ hit_run_again:
 		//std::cout << "data:\n" << _data; 
 		//std::cout << "lables:\n" << _labels.t(); 
 		//std::cout << "_data_occupied:" << _data_occupied << std::endl; 
-		//dbg_print();
+		dbg_print();
 		if (_labels.at(_data_occupied-1) * pred1 >= 0) {
 			coef = A * co1;
 		} else {
@@ -362,10 +378,10 @@ hit_run_again:
 			*/
 		}
 
-		//dbg_print();
+		dbg_print();
 		//std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
 		std::cout << *this;
-		//dbg_print();
+		dbg_print();
 		//poly.setValues(_weight);
 		for (size_t k = 0; k < _weight.n_elem; k++)
 			poly.set_coef(k, _weight.at(k));
@@ -376,7 +392,7 @@ hit_run_again:
 				break;
 			}
 		}
-		//dbg_print();
+		dbg_print();
 		//std::cout << "Step: " << _data_occupied << std::endl;
 		//std::cout << "\nselection:\n" << selection;
 		if (errate > 0)
@@ -387,9 +403,9 @@ hit_run_again:
 #ifdef _LOG_
 		of.close();
 #endif
-	dbg_print();
+	//dbg_print();
 	if (iteration >= MAX_ITERATION)
 		return false;
-	dbg_print();
+	//dbg_print();
 	return true;
 }

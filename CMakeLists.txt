@@ -2,13 +2,13 @@ cmake_minimum_required (VERSION 2.8)
 #add_definitions(-D__SELECTIVE_SAMPLING_ENABLED)
 project(QBC)
 
-add_definitions (-D_DBG_)
+#add_definitions (-D_DBG_)
 #add_definitions (-D_RAND_)
 add_definitions (-D_Z3_)
 #add_definitions (-D_MISTRAL_)
 #add_definitions (-D_PRT_)
 #add_definitions (-D__PRT_DEBUG)
-add_definitions (-D_BOUND_SOLVE_)
+#add_definitions (-D_BOUND_SOLVE_)
 add_definitions (-D_LOG_)
 
 

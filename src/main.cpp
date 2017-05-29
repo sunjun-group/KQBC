@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 	//int dim = 3;
 	dim = oracle._dim;
 	std::cout << "main>>dim=" << dim << std::endl;
-	int init_sample_num = 16;
+	int init_sample_num = 32;
 	//oracle.output();
 	//QBCLearner l({"x", "y", "z"});
 	//l.add({1.0, 1.0, 1.0}, 1.0);

@@ -171,11 +171,20 @@ class QBCLearner {
 			z3::expr hypo = expr0 >= 0;
 			if (!b)
 				hypo = !hypo;
+
 //#ifdef _BOUND_SOLVE_
 			for (size_t i = 1; i < _names.size(); i++) {
 				hypo = hypo && (x[i] >= -bound) && (x[i]<= bound);
 			}
 //#endif
+
+			for (size_t i = 0; i < _data_occupied; i++) {
+				z3::expr ith_value = (x[1] == (int)_data.at(i, 1));
+				for (size_t j = 2; j < _names.size(); j++) {
+					ith_value = ith_value && (x[j] == (int)_data.at(i, j));
+				}
+				hypo = hypo && !ith_value;
+			}
 			//cout << "--->z3: " << hypo << endl;
 			return hypo;
 		}
@@ -195,7 +204,7 @@ class QBCLearner {
 				cout << RED << "UNSAT " << NORMAL;
 				return false;
 			} else {
-				cout << GREEN << "SAT\n" << NORMAL;
+				cout << GREEN << "SAT\t" << NORMAL;
 				//dbg_print();
 				model m = s.get_model();
 				for (size_t i = 1; i < _names.size(); i++) {
