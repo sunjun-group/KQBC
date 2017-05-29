@@ -20,7 +20,7 @@
 
 
 const double tolerance = 1.0e-10;
-const int MAX_ITERATION = 256;
+const int MAX_ITERATION = 1<<10;
 const size_t qbc_learner_default_problem_size = 1 << 16;
 const int MAXN = 500000;
 //const int MAXN = 999999;
@@ -133,7 +133,7 @@ class QBCLearner {
 			Constraint c2 = toMistralConstraint(w2) & toMistralConstraint(w1, false);
 			Constraint c = c1 | c2;
 			if (mistralSolve(c, s) == false) {
-				std::cout << "Can not find a solution for constraint: " << c << std::endl;
+				std::cout << "Mistral Can not find a solution for constraint: " << c << std::endl;
 				_status = 1;
 				return s;
 			}
@@ -171,9 +171,11 @@ class QBCLearner {
 			z3::expr hypo = expr0 >= 0;
 			if (!b)
 				hypo = !hypo;
+//#ifdef _BOUND_SOLVE_
 			for (size_t i = 1; i < _names.size(); i++) {
 				hypo = hypo && (x[i] >= -bound) && (x[i]<= bound);
 			}
+//#endif
 			//cout << "--->z3: " << hypo << endl;
 			return hypo;
 		}
@@ -182,16 +184,19 @@ class QBCLearner {
 			//cout << BLUE << "CONSTRAINT: " << e << endl;
 			z3::solver s(c);
 			s.add(e);
+			params p(c);
+			p.set(":timeout", static_cast<unsigned>(100)); // 100ms
+			s.set(p);
 			//dbg_print();
 			v.resize(_names.size());
 			v.at(0) = 1;
 
-			if (s.check() == unsat) {
-				cout << "UNSAT\n";
+			if (s.check() != sat) {
+				cout << RED << "UNSAT " << NORMAL;
 				return false;
 			} else {
-				cout << "SAT\n";
-				dbg_print();
+				cout << GREEN << "SAT\n" << NORMAL;
+				//dbg_print();
 				model m = s.get_model();
 				for (size_t i = 1; i < _names.size(); i++) {
 					expr val = m.eval(x[i]);
@@ -200,7 +205,7 @@ class QBCLearner {
 						v.at(i) = tmp;
 					else 
 						return false;
-					cout << "..." << _names[i] << "**" << x[i] << "**"<< ": " << val << " #### " << tmp << endl;
+					//cout << "..." << _names[i] << "**" << x[i] << "**"<< ": " << val << " #### " << tmp << endl;
 				}
 				return true;
 			}
@@ -213,17 +218,21 @@ class QBCLearner {
 			  context c(cfg);
 			  */
 			//std::cout << "SAMPLING::\n\t" << w1.t() << "\t" << w2.t();
-			bound = 100;
 			arma::vec s;
 			vector<z3::expr> x = setupZ3();
+#ifdef _BOUND_SOLVE_
+			bound = 10;
 			while (bound <= 100000) {
-				cout << "Try to solve polynomial within [" << -bound << ", " << bound << "] -- ";
+				cout << "[" << -bound << "," << bound << "]" << flush;
+#else
+				bound = 100000;
+#endif
 				z3::expr c1 = toZ3Constraint(w1) && toZ3Constraint(w2, false);
 				z3::expr c2 = toZ3Constraint(w2) && toZ3Constraint(w1, false);
-				//z3::expr cc = c1  c2;
 				z3::expr cc = c1 || c2;
 				if (z3Solve(cc, s) == false) {
 					//cout << "can not find solutions for bound=" << bound << ". Try again..." << endl;
+#ifdef _BOUND_SOLVE_
 					bound *= 10;
 					continue;
 				} else {
@@ -231,24 +240,31 @@ class QBCLearner {
 				}
 			}
 			if (bound > 100000) {
-				std::cout << "Can not find a solution for the constraint." << std::endl;
+#endif
+				std::cout << "Z3 Can not find a solution for the constraint." << std::endl;
 				_status = 1;
 				return s;
 			}
-			cout << YELLOW << "-'-'-'-'-" << s.t() << NORMAL;
+			//cout << YELLOW << "-'-'-'-'-" << s.t() << NORMAL;
 			_status = 0;
 			return s;
 		}
 
 		arma::vec samplingMixed(arma::vec w1, arma::vec w2) {
-			arma::vec s = samplingRandomly(w1, w2);
+			arma::vec s;
+#ifdef _RAND_
+			cout << "trying randomly...\n";
+			s = samplingRandomly(w1, w2);
 			if (_status == 0)
 				return s;
+#endif
 #ifdef _MISTRAL_
+			cout << "trying mistral solver...\n";
 			s = samplingByMistral(w1, w2);
 #endif
 #ifdef _Z3_
-			s = samplingByMistral(w1, w2);
+			cout << "trying z3 solver...";
+			s = samplingByZ3(w1, w2);
 #endif
 			return s;
 		}
@@ -260,12 +276,9 @@ class QBCLearner {
 		void clear();
 
 		friend std::ostream& operator << (std::ostream& out, QBCLearner& qbc) {
-			out << std::setprecision(16);
+			out << std::setprecision(4);
 			bool found_not_zero = false;
 			arma::vec w = qbc._weight;
-			arma::vec ratio_w = w / w[1]; 
-			std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-			std::cout << "R-Learn: " << ratio_w.t();
 			std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n" << NORMAL;
 			if (w[0] != 0) {
 				found_not_zero = true;
@@ -295,6 +308,19 @@ class QBCLearner {
 			if (found_not_zero == false)
 				std::cout << YELLOW << "0";
 			std::cout << " >= 0";
+
+			/*
+			std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n" << NORMAL;
+			*/
+			w = qbc._weight;
+			size_t index = 1;
+			while (index < w.n_elem) {
+				if (w[index] != 0)
+					break;
+				index++;
+			}
+			arma::vec ratio_w = w / w[index]; 
+			std::cout << BOLD << YELLOW << "\nR-Learn: " << ratio_w.t() << NORMAL;
 			return out;
 		}
 
@@ -314,8 +340,7 @@ class QBCLearner {
 			/*
 			   poly.set_coefs(_weight, _weight.n_elem, 
 			   [](arma::vec& x, int t) {
-			   return (double)x.at(t);
-			   }
+			   return (double)x.at(t); }
 			   );
 			   */
 			poly.roundoff_in_place();

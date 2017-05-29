@@ -8,6 +8,8 @@ add_definitions (-D_Z3_)
 #add_definitions (-D_MISTRAL_)
 #add_definitions (-D_PRT_)
 #add_definitions (-D__PRT_DEBUG)
+add_definitions (-D_BOUND_SOLVE_)
+add_definitions (-D_LOG_)
 
 
 if(UNIX)

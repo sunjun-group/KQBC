@@ -15,21 +15,21 @@ bool TEST = false;
 Oracle oracle;
 
 /*
-arma::vec activeSampling(arma::vec w1, arma::vec w2) {
-	//std::cout << YELLOW << ">>>>>>>>>>>>>>>>>" << __FILE__ << ":" << __LINE__ << "-activeSampling-------------------" << NORMAL << std::endl;
-	int n = 0;
-	arma::vec s;
-	size_t size = w1.n_rows;
-	while (++n <= MAXN) {
-		arma::vec s = arma::randi<arma::mat> (size, arma::distr_param(0, upbound));
-		s.at(0) = 1;
-		if (dot(s, w1) * dot(s, w2) < 0) {
-			return s;
-		}
-	}
-	std::cout << RED << "Tried " << MAXN << " times, can not find solutions inside the following matrix: \n" << w1.t() << w2.t() << NORMAL;
-	_status = 1;
-	return s;
+   arma::vec activeSampling(arma::vec w1, arma::vec w2) {
+//std::cout << YELLOW << ">>>>>>>>>>>>>>>>>" << __FILE__ << ":" << __LINE__ << "-activeSampling-------------------" << NORMAL << std::endl;
+int n = 0;
+arma::vec s;
+size_t size = w1.n_rows;
+while (++n <= MAXN) {
+arma::vec s = arma::randi<arma::mat> (size, arma::distr_param(0, upbound));
+s.at(0) = 1;
+if (dot(s, w1) * dot(s, w2) < 0) {
+return s;
+}
+}
+std::cout << RED << "Tried " << MAXN << " times, can not find solutions inside the following matrix: \n" << w1.t() << w2.t() << NORMAL;
+_status = 1;
+return s;
 }
 */
 
@@ -104,14 +104,25 @@ int main(int argc, char** argv) {
 	dbg_print();
 	l.learn_linear(100);
 	std::cout << l << std::endl;
-	dbg_print();
+	//dbg_print();
+	cout << "::::::::::>>afater roundoff\n";
 	l.roundoff();
-	dbg_print();
 	std::cout << l << std::endl;
-	std::cout << "----------oracle---------\n" << oracle._w.t();
-	oracle._w = oracle._w / oracle._w[1];
+	//dbg_print();
+	
+	std::cout << "-----------------------------oracle-----------------------------\n"; //	<< oracle._w.t();
+	Polynomial oracle_poly(oracle._w);
+	std::cout << oracle_poly.to_string() << endl;
+
+	size_t index = 1;
+	while (index < oracle._w.n_elem) {
+		if (oracle._w[index] != 0)
+			break;
+		index++;
+	}
+	arma::vec ratio_w = oracle._w / oracle._w[index]; 
 	std::cout << CYAN << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\nR-Oracle:" 
-		<< oracle._w.t() << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"; 
+		<< ratio_w.t() << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"; 
 	//l.add({2.0, 0.0}, -1.0);
 	//QBCLearner l({"x"});
 	//l.add({1.0}, 1.0);

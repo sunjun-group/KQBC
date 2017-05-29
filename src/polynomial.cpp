@@ -127,7 +127,8 @@ bool Polynomial::set_variable_name_list(const vector<string>& names) {
 bool Polynomial::set_anonymous_list(int n) {
 	vars.clear();
 	for (int i = 0; i < n; i++) {
-		vars.push_back("anonymous_[" + std::to_string(i) + "]");
+		//vars.push_back("anonymous_[" + std::to_string(i) + "]");
+		vars.push_back("X_[" + std::to_string(i+1) + "]");
 	}
 	nvars = n;
 	set_power(1);
@@ -166,7 +167,7 @@ bool Polynomial::scale(double times) {
 
 std::string Polynomial::to_string() const {
 	std::ostringstream stm;
-	stm << std::setprecision(12);
+	stm << std::setprecision(4);
 	bool firstplus = false;
 	for (int j = 0; j < dim; j++) {
 		if (values[j] == 0) continue;

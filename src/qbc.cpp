@@ -145,7 +145,13 @@ arma::vec QBCLearner::hit_and_run(arma::vec xpoint, arma::mat A /*constraintMat*
 
 bool QBCLearner::learn_linear(size_t T) {
 
+#ifdef _MISTRAL_
 	int times = 100;
+#endif
+#ifdef _LOG_
+	ofstream of("./log");
+	of << std::setprecision(4);
+#endif
 
 	_data.resize(_data_occupied, _names.size());
 	_labels.resize(_data_occupied);
@@ -168,7 +174,7 @@ bool QBCLearner::learn_linear(size_t T) {
 	int iteration;
 	for(iteration = 0; iteration <= MAX_ITERATION; iteration++) {
 		//std::cout << GREEN << BOLD << "################################################################################################## " << iteration << NORMAL << std::endl;
-		std::cout << BLUE << "-------------------------------------------------------------> " << iteration << NORMAL << std::endl;
+		std::cout << BOLD << BLUE << "----------------------------------------------------------------------------------------------------------------------> " << iteration << NORMAL << std::endl;
 		arma::uvec selection(_data_occupied);
 		for (size_t i = 0; i < _data_occupied; i++)
 		{
@@ -210,6 +216,8 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		//arma::mat coefselection = coef.submat(selection, first_element);
 
+		int n_hit_run = 1;
+hit_run_again:
 		co1 = arma::pinv(A) * coef.submat(selection, first_element);
 		co2 = hit_and_run(co1, restri, T);
 		co1 = hit_and_run(co2, restri, T);
@@ -241,20 +249,39 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		vec_simplify(w1);
 		vec_simplify(w2);
-		cout << "w1:" << w1.t();
-		cout << "w2:" << w2.t();
+		//cout << "w1:" << w1.t();
+		//cout << "w2:" << w2.t();
 
 		/*
 		dbg_print();
 		z3::context cont;
+		*/
+		cout << "last_learn: " << pre_weight.t();
 		Polynomial p1(w1), p2(w2);
-		cout << "p1: " << p1.to_string() << endl;
+		cout << " *p1: " << p1.to_string() << endl;
+		cout << " *p2: " << p2.to_string() << endl;
+		if (p1.is_similar(p2)) {
+			cout << BOLD << GREEN << "w1 ~= w2. for " << n_hit_run << " times"<< endl << NORMAL;
+			n_hit_run ++;
+			if (n_hit_run >= 2) {
+			//if (n_hit_run >= 3) {
+				cout << BOLD << GREEN << "CONVERGED>>>>" << endl << NORMAL;
+				//_weight = w1;
+				_weight = pre_weight;
+				vec_simplify(_weight);
+				break;
+			} else {
+				goto hit_run_again;
+			}
+		}
+		/*
 		z3::expr expr1 = p1.to_z3_expr(cont);
-		cout << "p2: " << p2.to_string() << endl;
 		z3::expr expr2 = p2.to_z3_expr(cont);
 		dbg_print();
 		*/
 		//*
+		arma::vec xx = samplingMixed(w1, w2);
+#if 0
 #ifdef _RAND_
 		arma::vec xx = samplingRandomly(w1, w2);
 #endif
@@ -277,16 +304,21 @@ bool QBCLearner::learn_linear(size_t T) {
 			} 
 		}
 #endif
+#endif
 		if (_status != 0) {
 			break;
 		}
 
-		cout << "  w1(xx) = " << dot(w1, xx) << endl;
-		cout << "  w2(xx) = " << dot(w2, xx) << endl;
 
 		//	*/
 		double yy = categorizeF(xx); 
 		addVec(xx, yy);
+#ifdef _LOG_
+		of << iteration + 1 << ": " << xx.t();
+#endif
+		cout << "  w1(xx) = " << dot(w1, xx) << endl;
+		cout << "  w2(xx) = " << dot(w2, xx) << endl;
+
 		K = _data * _data.t();
 
 		//}
@@ -299,7 +331,7 @@ bool QBCLearner::learn_linear(size_t T) {
 		//std::cout << "data:\n" << _data; 
 		//std::cout << "lables:\n" << _labels.t(); 
 		//std::cout << "_data_occupied:" << _data_occupied << std::endl; 
-		dbg_print();
+		//dbg_print();
 		if (_labels.at(_data_occupied-1) * pred1 >= 0) {
 			coef = A * co1;
 		} else {
@@ -325,12 +357,14 @@ bool QBCLearner::learn_linear(size_t T) {
 
 		if (iteration >= 1) {
 			pre_poly = poly;
-			arma::vec ratio = _weight / pre_weight;
+			/*arma::vec ratio = _weight / pre_weight;
 			std::cout << CYAN << "Ratio: " << ratio.t() << NORMAL;
+			*/
 		}
 
 		//dbg_print();
-		std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
+		//std::cout << "weight:" << YELLOW << _weight.t() << NORMAL;
+		std::cout << *this;
 		//dbg_print();
 		//poly.setValues(_weight);
 		for (size_t k = 0; k < _weight.n_elem; k++)
@@ -350,6 +384,9 @@ bool QBCLearner::learn_linear(size_t T) {
 		pre_weight = _weight;
 	}
 
+#ifdef _LOG_
+		of.close();
+#endif
 	dbg_print();
 	if (iteration >= MAX_ITERATION)
 		return false;
